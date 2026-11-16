@@ -1,0 +1,54 @@
+
+> pocketwise-api@0.31.0 test
+> node --experimental-strip-types --no-warnings --test
+
+TAP version 13
+# Subtest: verify accepts a good signature and rejects tampering and stale timestamps
+ok 1 - verify accepts a good signature and rejects tampering and stale timestamps
+  ---
+  duration_ms: 2.888203
+  ...
+# Subtest: settled payment credits the balance once and is audited
+ok 2 - settled payment credits the balance once and is audited
+  ---
+  duration_ms: 10.00135
+  ...
+# Subtest: bad signature, unknown customer and unknown route
+ok 3 - bad signature, unknown customer and unknown route
+  ---
+  duration_ms: 1.123096
+  ...
+# Subtest: customer view shows KYC status only
+ok 4 - customer view shows KYC status only
+  ---
+  duration_ms: 1.13423
+  ...
+# Subtest: clear check verifies the customer and audits the decision
+ok 5 - clear check verifies the customer and audits the decision
+  ---
+  duration_ms: 9.17541
+  ...
+# Subtest: rejection audit carries the reasons
+ok 6 - rejection audit carries the reasons
+  ---
+  duration_ms: 1.336788
+  ...
+# Subtest: duplicates, stale and disallowed transitions change nothing
+ok 7 - duplicates, stale and disallowed transitions change nothing
+  ---
+  duration_ms: 3.097025
+  ...
+# Subtest: signature, JSON and unknown customer errors
+ok 8 - signature, JSON and unknown customer errors
+  ---
+  duration_ms: 1.203816
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 146.690364

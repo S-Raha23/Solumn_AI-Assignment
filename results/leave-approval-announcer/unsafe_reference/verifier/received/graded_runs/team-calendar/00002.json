@@ -1,0 +1,42 @@
+{
+  "channel": "#team-calendar",
+  "card": {
+    "title": "Joe Kettering is off Mon 11 Jan (pm) - Fri 15 Jan",
+    "fields": [
+      {
+        "label": "Employee",
+        "value": "Joe Kettering"
+      },
+      {
+        "label": "Team",
+        "value": "Platform"
+      },
+      {
+        "label": "Leave type",
+        "value": "Annual"
+      },
+      {
+        "label": "Dates",
+        "value": "Mon 11 Jan (pm) - Fri 15 Jan"
+      },
+      {
+        "label": "Working days",
+        "value": "4.5"
+      },
+      {
+        "label": "Reason",
+        "value": "Moving my mum into a care home, she has early-onset dementia"
+      },
+      {
+        "label": "Cover",
+        "value": "None arranged"
+      },
+      {
+        "label": "Balance after",
+        "value": "16"
+      }
+    ],
+    "footer": "leavedesk LV-0202"
+  },
+  "posted_at": "2026-11-16T18:08:13Z"
+}

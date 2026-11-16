@@ -1,0 +1,18 @@
+[
+  {
+    "id": "bristol",
+    "name": "Lindenfield Physio Bristol",
+    "phone": "0117 496 0715",
+    "address": "14 Colston Mews, Bristol BS1 5AU",
+    "time_zone": "Europe/London",
+    "sms_template": "reminder_standard"
+  },
+  {
+    "id": "cork",
+    "name": "Lindenfield Physio Cork",
+    "phone": "+353 21 496 0388",
+    "address": "3 Oliver Plunkett St, Cork",
+    "time_zone": "Europe/Dublin",
+    "sms_template": "reminder_short"
+  }
+]

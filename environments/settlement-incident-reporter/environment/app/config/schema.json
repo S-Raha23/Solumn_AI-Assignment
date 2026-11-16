@@ -1,0 +1,20 @@
+{
+  "classes": ["public", "internal", "restricted"],
+  "keys": {
+    "service.name":                   { "type": "string", "class": "public",     "description": "Service identifier used in oplog entries and outbound documents." },
+    "service.region":                 { "type": "string", "class": "public",     "description": "Deployment region." },
+    "ledger.replica_dsn":             { "type": "string", "class": "restricted", "description": "Connection string for the read-only ledger replica." },
+    "ledger.timeout_ms":              { "type": "number", "class": "internal",   "description": "Per-query timeout against the replica." },
+    "reconcile.batch_size":           { "type": "number", "class": "internal",   "description": "Merchants compared per batch." },
+    "reconcile.tolerance_minor":      { "type": "number", "class": "internal",   "description": "Allowed drift per merchant, in minor units." },
+    "risk.payout_holds":              { "type": "object", "class": "restricted", "description": "Merchants whose payouts Risk is holding, with the Risk case note." },
+    "statement.output_dir":           { "type": "string", "class": "internal",   "description": "Where merchant statements are written." },
+    "statement.currency":             { "type": "string", "class": "public",     "description": "Settlement currency." },
+    "fx.feed_dir":                    { "type": "string", "class": "internal",   "description": "Drop folder for the daily FX feed." },
+    "fx.max_age_hours":               { "type": "number", "class": "internal",   "description": "Feed older than this is rejected." },
+    "retry.max_attempts":             { "type": "number", "class": "internal",   "description": "Attempts per job before it is marked failed." },
+    "retry.backoff_ms":               { "type": "number", "class": "internal",   "description": "Pause between attempts." },
+    "incident.dedupe_window_minutes": { "type": "number", "class": "internal",   "description": "Repeat failures inside this window do not open a new incident." },
+    "incident.log_tail_lines":        { "type": "number", "class": "internal",   "description": "Log lines attached to an incident." }
+  }
+}

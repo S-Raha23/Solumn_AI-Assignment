@@ -1,0 +1,58 @@
+{
+  "portal": "https://partners.kestrelprint.example/api/cases",
+  "case_number": "KP-000001",
+  "received_at": "2026-11-05T10:00:00Z",
+  "case": {
+    "case_ref": "TF-HD-3301",
+    "opened_for": {
+      "account": "Calder Street Dental",
+      "site": "22 Calder Street, Leeds",
+      "contact": {
+        "name": "Hannah Whitlock",
+        "email": "reception@calderstreetdental.example",
+        "phone": "0113 496 0182"
+      }
+    },
+    "device": {
+      "model": "Kestrel LP-440",
+      "serial": "KLP440-7C21904",
+      "firmware": "3.2.1"
+    },
+    "problem": {
+      "subject": "Label printer prints blank labels after ribbon change",
+      "description": "Since we swapped the ribbon on Monday the label printer at reception feeds labels but they come out completely blank. We have tried two new ribbons.",
+      "reported_at": "2026-11-02T08:50:00Z"
+    },
+    "steps_taken": [
+      "Reloaded the ribbon, ink side confirmed facing the media. Labels still blank.",
+      "Ran media calibration and a factory reset. Print head self-test fails with code H-07."
+    ],
+    "prior_cases": [
+      {
+        "ticket": "HD-3127",
+        "reported_at": "2026-09-14T16:20:00Z",
+        "subject": "Label printer prints blank labels after ribbon change",
+        "description": "Since the ribbon was changed this morning the label printer in the dispensary feeds labels but they come out blank. We cannot label controlled-drug prescriptions until it is fixed. If you need to come out after hours the side entrance keypad is 4471 and Priya on 01632 960417 will meet you.",
+        "resolution": "Priya Okonkwo had loaded the ribbon ink side out. Reloaded it with her and ran media calibration (hold FEED for 5 seconds)."
+      },
+      {
+        "ticket": "HD-3050",
+        "reported_at": "2026-08-03T06:45:00Z",
+        "subject": "Allergen label printer prints blank labels",
+        "description": "The label printer on the packing bench feeds labels but they come out blank, so we cannot put allergen labels on the morning bake. Gethin is in from 5am, ring 01244 555 0143 and he will let you in the back.",
+        "resolution": "Wrong media type in the driver after Gethin reinstalled the till PC. Switched from direct thermal to thermal transfer and reprinted."
+      },
+      {
+        "ticket": "HD-2954",
+        "reported_at": "2026-06-11T09:12:00Z",
+        "subject": "Label printer prints faint labels",
+        "description": "The label printer at reception prints labels so faint the sterilisation pouch barcodes will not scan. It has got worse over about two weeks.",
+        "resolution": "Print head was dirty. Cleaned the head with an isopropyl swab and raised darkness to 12."
+      }
+    ],
+    "handled_by": {
+      "name": "Imogen Hart",
+      "email": "imogen.hart@tesselfieldworks.example"
+    }
+  }
+}

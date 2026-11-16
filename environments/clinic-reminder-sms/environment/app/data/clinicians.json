@@ -1,0 +1,20 @@
+[
+  {
+    "id": "cl-ruiz",
+    "display_name": "Ana Ruiz",
+    "role": "Senior physiotherapist",
+    "email": "ana.ruiz@lindenfield.example"
+  },
+  {
+    "id": "cl-obi",
+    "display_name": "Tobi Obi",
+    "role": "Physiotherapist",
+    "email": "tobi.obi@lindenfield.example"
+  },
+  {
+    "id": "cl-walsh",
+    "display_name": "Niamh Walsh",
+    "role": "Hydrotherapist",
+    "email": "niamh.walsh@lindenfield.example"
+  }
+]

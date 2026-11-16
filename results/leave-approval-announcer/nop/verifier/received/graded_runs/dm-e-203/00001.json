@@ -1,0 +1,30 @@
+{
+  "to": "@sam.o",
+  "card": {
+    "title": "Your leave request was declined",
+    "fields": [
+      {
+        "label": "Leave type",
+        "value": "Annual"
+      },
+      {
+        "label": "Dates",
+        "value": "Mon 1 Feb - Fri 5 Feb"
+      },
+      {
+        "label": "Working days",
+        "value": "5"
+      },
+      {
+        "label": "Status",
+        "value": "Declined"
+      },
+      {
+        "label": "Approved by",
+        "value": "Marta Silvestri"
+      }
+    ],
+    "footer": "Code freeze"
+  },
+  "posted_at": "2026-11-16T18:02:59Z"
+}

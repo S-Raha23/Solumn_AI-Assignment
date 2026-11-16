@@ -1,0 +1,20 @@
+[
+  {
+    "id": "st-01",
+    "name": "Imogen Hart",
+    "email": "imogen.hart@tesselfieldworks.example",
+    "team": "field"
+  },
+  {
+    "id": "st-02",
+    "name": "Dev Raman",
+    "email": "dev.raman@tesselfieldworks.example",
+    "team": "field"
+  },
+  {
+    "id": "st-03",
+    "name": "Lucia Brandt",
+    "email": "lucia.brandt@tesselfieldworks.example",
+    "team": "remote"
+  }
+]

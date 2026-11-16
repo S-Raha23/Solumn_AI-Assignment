@@ -1,0 +1,28 @@
+{
+  "body": {
+    "to": "+971501234567",
+    "template": "reminder_full",
+    "vars": {
+      "appointment": {
+        "kind": "initial assessment",
+        "minutes": 45,
+        "starts_local": "Sat 21 Nov, 10:00"
+      },
+      "clinic": {
+        "address": "Marina Plaza, Level 3, Dubai"
+      },
+      "clinician": {
+        "display_name": "Niamh Walsh",
+        "role": "Hydrotherapist"
+      },
+      "patient": {
+        "first_name": "Mina",
+        "last_name": "Farrokh"
+      }
+    },
+    "reference": "appt-A2"
+  },
+  "destination": "sms",
+  "sent_at": "2026-11-16T17:57:38Z",
+  "url": "https://api.relaywave.example/v3/messages"
+}

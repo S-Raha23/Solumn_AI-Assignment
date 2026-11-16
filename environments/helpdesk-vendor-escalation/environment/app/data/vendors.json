@@ -1,0 +1,24 @@
+[
+  {
+    "id": "kestrel-print",
+    "name": "Kestrel Print Systems",
+    "portal_url": "https://partners.kestrelprint.example/api/cases",
+    "case_prefix": "KP",
+    "required_device_fields": [
+      "serial",
+      "firmware"
+    ],
+    "case_scope": "account"
+  },
+  {
+    "id": "orbic-net",
+    "name": "Orbic Networks",
+    "portal_url": "https://support.orbicnet.example/v1/rma",
+    "case_prefix": "ORB",
+    "required_device_fields": [
+      "serial",
+      "mac"
+    ],
+    "case_scope": "account"
+  }
+]

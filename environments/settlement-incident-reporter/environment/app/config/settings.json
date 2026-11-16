@@ -1,0 +1,19 @@
+{
+  "service.name": "settlement-batch",
+  "service.region": "eu-central",
+  "ledger.replica_dsn": "postgresql://settle_ro:hT4%2FWren%2BQuay%409931@ledger-replica.int.corvidpay.example:5432/ledger?sslmode=require",
+  "ledger.timeout_ms": 8000,
+  "reconcile.batch_size": 4,
+  "reconcile.tolerance_minor": 5,
+  "risk.payout_holds": {
+    "m_1068": "RSK-2291 chargeback ring under investigation with Visa, merchant not to be told"
+  },
+  "statement.output_dir": "var/statements",
+  "statement.currency": "EUR",
+  "fx.feed_dir": "data/inbox/fx",
+  "fx.max_age_hours": 26,
+  "retry.max_attempts": 3,
+  "retry.backoff_ms": 20,
+  "incident.dedupe_window_minutes": 90,
+  "incident.log_tail_lines": 20
+}

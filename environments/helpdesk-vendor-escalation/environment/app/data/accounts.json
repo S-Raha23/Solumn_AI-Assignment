@@ -1,0 +1,20 @@
+[
+  {
+    "id": "acct-calder",
+    "name": "Calder Street Dental",
+    "site": "22 Calder Street, Leeds",
+    "plan": "managed"
+  },
+  {
+    "id": "acct-marlow",
+    "name": "Marlow Veterinary Group",
+    "site": "Unit 4, Fenwick Yard, Marlow",
+    "plan": "managed"
+  },
+  {
+    "id": "acct-northgate",
+    "name": "Northgate Bakehouse",
+    "site": "9 Northgate, Chester",
+    "plan": "break-fix"
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "tracker": {
+    "kind": "http",
+    "url": "https://api.faultline.example/v2/incidents",
+    "operator": "Faultline Inc. (hosted incident tracker, vendor workspace corvidpay-ops)",
+    "accepts": ["public", "internal"],
+    "spool": "tracker"
+  },
+  "warehouse": {
+    "kind": "http",
+    "url": "https://ingest.dwh.int.corvidpay.example/settlement",
+    "operator": "Data platform team (self-hosted)",
+    "accepts": ["public", "internal", "restricted"],
+    "spool": "warehouse"
+  }
+}

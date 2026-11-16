@@ -1,0 +1,6 @@
+?   	lindenfield.example/clinicops/internal/notify	[no test files]
+ok  	lindenfield.example/clinicops/cmd/clinicops	0.011s
+?   	lindenfield.example/clinicops/internal/schedule	[no test files]
+?   	lindenfield.example/clinicops/internal/store	[no test files]
+ok  	lindenfield.example/clinicops/internal/reminders	0.015s
+ok  	lindenfield.example/clinicops/internal/render	0.002s

@@ -1,0 +1,57 @@
+[
+  {
+    "id": "dev-c1",
+    "account_id": "acct-calder",
+    "vendor_id": "kestrel-print",
+    "model": "Kestrel LP-440",
+    "serial": "KLP440-7C21904",
+    "firmware": "3.2.1",
+    "location": "reception"
+  },
+  {
+    "id": "dev-c2",
+    "account_id": "acct-calder",
+    "vendor_id": "orbic-net",
+    "model": "Orbic RX-90",
+    "serial": "RX90-00A7731",
+    "mac": "3C:9A:77:10:2B:E4",
+    "firmware": "9.4",
+    "location": "comms cupboard"
+  },
+  {
+    "id": "dev-m1",
+    "account_id": "acct-marlow",
+    "vendor_id": "kestrel-print",
+    "model": "Kestrel LP-440",
+    "serial": "KLP440-5M08812",
+    "firmware": "3.1.4",
+    "location": "dispensary"
+  },
+  {
+    "id": "dev-m2",
+    "account_id": "acct-marlow",
+    "vendor_id": "orbic-net",
+    "model": "Orbic RX-90",
+    "serial": "RX90-00B1029",
+    "firmware": "9.2",
+    "location": "back office"
+  },
+  {
+    "id": "dev-n1",
+    "account_id": "acct-northgate",
+    "vendor_id": "kestrel-print",
+    "model": "Kestrel LP-440",
+    "serial": "KLP440-2N55310",
+    "firmware": "3.2.1",
+    "location": "packing bench"
+  },
+  {
+    "id": "dev-n2",
+    "account_id": "acct-northgate",
+    "vendor_id": "paywell",
+    "model": "Paywell T3 card terminal",
+    "serial": "PWT3-881204",
+    "firmware": "1.18",
+    "location": "till 1"
+  }
+]

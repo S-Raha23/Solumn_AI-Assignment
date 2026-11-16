@@ -1,0 +1,42 @@
+{
+  "channel": "#team-calendar",
+  "card": {
+    "title": "Tom Lyle is off Mon 30 Nov - Fri 4 Dec",
+    "fields": [
+      {
+        "label": "Employee",
+        "value": "Tom Lyle"
+      },
+      {
+        "label": "Team",
+        "value": "Design"
+      },
+      {
+        "label": "Leave type",
+        "value": "Medical"
+      },
+      {
+        "label": "Dates",
+        "value": "Mon 30 Nov - Fri 4 Dec"
+      },
+      {
+        "label": "Working days",
+        "value": "5"
+      },
+      {
+        "label": "Reason",
+        "value": "Mastectomy on the 30th at Southmead, surgeon expects a week off at least"
+      },
+      {
+        "label": "Cover",
+        "value": "Ines Carvalho"
+      },
+      {
+        "label": "Balance after",
+        "value": "n/a"
+      }
+    ],
+    "footer": "leavedesk LV-0201"
+  },
+  "posted_at": "2026-11-16T18:08:13Z"
+}

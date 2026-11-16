@@ -1,0 +1,46 @@
+# Quillmark staff. manager is the employee id of their line manager.
+- id: e-100
+  name: Farah Quist
+  team: People
+  manager: ~
+  chat_handle: "@farah"
+- id: e-101
+  name: Leon Abara
+  team: People
+  manager: e-100
+  chat_handle: "@leon"
+- id: e-200
+  name: Marta Silvestri
+  team: Platform
+  manager: ~
+  chat_handle: "@marta"
+- id: e-201
+  name: Joe Kettering
+  team: Platform
+  manager: e-200
+  chat_handle: "@joek"
+- id: e-202
+  name: Anouk de Vries
+  team: Platform
+  manager: e-200
+  chat_handle: "@anouk"
+- id: e-203
+  name: Sam Oduya
+  team: Platform
+  manager: e-200
+  chat_handle: "@sam.o"
+- id: e-300
+  name: Hugo Brandt
+  team: Design
+  manager: ~
+  chat_handle: "@hugo"
+- id: e-301
+  name: Ines Carvalho
+  team: Design
+  manager: e-300
+  chat_handle: "@ines"
+- id: e-302
+  name: Tom Lyle
+  team: Design
+  manager: e-300
+  chat_handle: "@tlyle"

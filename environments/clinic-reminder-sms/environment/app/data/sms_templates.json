@@ -1,0 +1,14 @@
+[
+  {
+    "name": "reminder_standard",
+    "body": "Hi {{patient.first_name}}, a reminder of your {{appointment.kind}} with {{clinician.display_name}} at {{clinic.name}} on {{appointment.starts_local}}. Reply C to confirm or call {{clinic.phone}} to rearrange."
+  },
+  {
+    "name": "reminder_short",
+    "body": "{{clinic.name}}: {{appointment.kind}} {{appointment.starts_local}} with {{clinician.display_name}}. Call {{clinic.phone}} to change."
+  },
+  {
+    "name": "moved",
+    "body": "Hi {{patient.first_name}}, your appointment at {{clinic.name}} has moved to {{appointment.starts_local}}."
+  }
+]

@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# leavedesk submit  --employee ID --type TYPE --from DATE --to DATE [--reason TEXT] [--cover ID]
+#                   [--half-start] [--half-end] [--today DATE]
+# leavedesk decline REQUEST --by ID [--note TEXT] [--now TIME]
+# leavedesk balance EMPLOYEE
+# leavedesk calendar --from DATE --to DATE
+require "optparse"
+require "time"
+require_relative "../lib/leavedesk/requests"
+
+include Leavedesk
+
+def parse(argv, spec)
+  opts = {}
+  OptionParser.new do |o|
+    spec.each do |name, kind|
+      flag = "--#{name.to_s.tr('_', '-')}"
+      kind == :flag ? o.on(flag) { opts[name] = true } : o.on("#{flag} VALUE") { |v| opts[name] = v }
+    end
+  end.parse!(argv)
+  opts
+end
+
+def now_from(value)
+  value ? Time.iso8601(value).utc : Time.now.utc
+end
+
+def run(argv)
+  command = argv.shift
+  store = Store.new
+  chat = Chat.new
+  case command
+  when "submit"
+    o = parse(argv, employee: :value, type: :value, from: :value, to: :value, reason: :value, cover: :value,
+                    half_start: :flag, half_end: :flag, today: :value)
+    today = o[:today] ? Date.parse(o[:today]) : Date.today
+    r = Requests.submit(store, chat, employee_id: o.fetch(:employee), type: o.fetch(:type), first_day: o.fetch(:from),
+                                     last_day: o.fetch(:to), reason: o[:reason], cover: o[:cover],
+                                     half_start: !!o[:half_start], half_end: !!o[:half_end], today: today)
+    puts "#{r['id']} submitted (#{Cards.format_days(r['days'])} working days)"
+  when "decline"
+    id = argv.shift
+    o = parse(argv, by: :value, note: :value, now: :value)
+    Requests.decline(store, chat, id, by: o.fetch(:by), note: o[:note], now: now_from(o[:now]))
+    puts "#{id} declined"
+  when "balance"
+    employee = store.employee(argv.shift.to_s)
+    (store.balances[employee["id"]] || {}).each { |type, left| puts "#{type}: #{Cards.format_days(left)}" }
+  when "calendar"
+    o = parse(argv, from: :value, to: :value)
+    first = Date.parse(o.fetch(:from))
+    last = Date.parse(o.fetch(:to))
+    store.requests.values.select { |r| r["status"] == "approved" }
+         .select { |r| Date.parse(r["first_day"]) <= last && Date.parse(r["last_day"]) >= first }
+         .sort_by { |r| [r["first_day"], r["id"]] }
+         .each { |r| puts "#{Cards.format_dates(r)}  #{store.employee(r['employee'])['name']}" }
+  else
+    warn "usage: leavedesk submit|decline|balance|calendar ..."
+    return 64
+  end
+  0
+rescue KeyError, OptionParser::ParseError, Date::Error, ArgumentError => e
+  warn "usage error: #{e.message}"
+  64
+rescue NotFound, PolicyError, NotAllowed, ChatError => e
+  warn "error: #{e.message}"
+  1
+end
+
+exit run(ARGV.dup)

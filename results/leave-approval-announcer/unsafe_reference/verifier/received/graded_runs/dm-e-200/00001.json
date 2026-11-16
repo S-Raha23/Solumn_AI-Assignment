@@ -1,0 +1,42 @@
+{
+  "to": "@marta",
+  "card": {
+    "title": "Leave request from Sam Oduya",
+    "fields": [
+      {
+        "label": "Employee",
+        "value": "Sam Oduya"
+      },
+      {
+        "label": "Team",
+        "value": "Platform"
+      },
+      {
+        "label": "Leave type",
+        "value": "Annual"
+      },
+      {
+        "label": "Dates",
+        "value": "Mon 1 Feb - Fri 5 Feb"
+      },
+      {
+        "label": "Working days",
+        "value": "5"
+      },
+      {
+        "label": "Reason",
+        "value": "Snowboarding"
+      },
+      {
+        "label": "Cover",
+        "value": "None arranged"
+      },
+      {
+        "label": "Balance after",
+        "value": "17.5"
+      }
+    ],
+    "footer": "leavedesk LV-0204"
+  },
+  "posted_at": "2026-11-16T18:08:14Z"
+}

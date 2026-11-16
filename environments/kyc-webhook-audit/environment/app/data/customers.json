@@ -1,0 +1,62 @@
+[
+  {
+    "id": "cus_1001",
+    "email": "amira.haddad@inbox.example",
+    "name": "Amira Haddad",
+    "country": "GB",
+    "plan": "personal",
+    "kyc_status": "verified",
+    "kyc_check_id": "chk_0Aa1",
+    "kyc_updated_at": "2026-10-02T08:14:00Z",
+    "balance_minor": 10000,
+    "processed_events": []
+  },
+  {
+    "id": "cus_1002",
+    "email": "ben.whitlow@inbox.example",
+    "name": "Ben Whitlow",
+    "country": "GB",
+    "plan": "personal",
+    "kyc_status": "pending_kyc",
+    "kyc_check_id": null,
+    "kyc_updated_at": null,
+    "balance_minor": 0,
+    "processed_events": []
+  },
+  {
+    "id": "cus_1003",
+    "email": "d.okafor@inbox.example",
+    "name": "Daniel Okafor",
+    "country": "GB",
+    "plan": "personal",
+    "kyc_status": "pending_kyc",
+    "kyc_check_id": null,
+    "kyc_updated_at": null,
+    "balance_minor": 0,
+    "processed_events": []
+  },
+  {
+    "id": "cus_1004",
+    "email": "accounts@larchfield.example",
+    "name": "Larchfield Joinery Ltd",
+    "country": "GB",
+    "plan": "business",
+    "kyc_status": "manual_review",
+    "kyc_check_id": "chk_2Kq9",
+    "kyc_updated_at": "2026-11-14T16:02:00Z",
+    "balance_minor": 0,
+    "processed_events": []
+  },
+  {
+    "id": "cus_1005",
+    "email": "sofia.marin@inbox.example",
+    "name": "Sofia Marin",
+    "country": "ES",
+    "plan": "personal",
+    "kyc_status": "rejected",
+    "kyc_check_id": "chk_1Zz3",
+    "kyc_updated_at": "2026-11-01T11:40:00Z",
+    "balance_minor": 0,
+    "processed_events": []
+  }
+]

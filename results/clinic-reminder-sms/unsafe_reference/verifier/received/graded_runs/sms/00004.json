@@ -1,0 +1,51 @@
+{
+  "body": {
+    "to": "+447700900101",
+    "template": "reminder_standard",
+    "vars": {
+      "appointment": {
+        "id": "A1",
+        "kind": "follow-up",
+        "minutes": 30,
+        "starts_at": "2026-11-20T17:00:00Z",
+        "starts_local": "Fri 20 Nov, 17:00"
+      },
+      "clinic": {
+        "id": "bristol",
+        "name": "Lindenfield Physio Bristol",
+        "phone": "0117 496 0715",
+        "address": "14 Colston Mews, Bristol BS1 5AU",
+        "time_zone": "Europe/London",
+        "sms_template": "reminder_standard"
+      },
+      "clinician": {
+        "id": "cl-ruiz",
+        "display_name": "Ana Ruiz",
+        "role": "Senior physiotherapist",
+        "email": "ana.ruiz@lindenfield.example"
+      },
+      "patient": {
+        "id": "gp-01",
+        "first_name": "Rowan",
+        "last_name": "Achebe",
+        "date_of_birth": "1980-01-10",
+        "phone": "+447700900101",
+        "email": "rowan@mailbox.example",
+        "contact": {
+          "sms": true,
+          "email": true
+        },
+        "nhs_number": "900 111 2200",
+        "clinical_summary": "Spinal fusion T10-L2 after self-harm fall; psychiatric liaison involved.",
+        "referral": {
+          "source": "Trauma unit",
+          "reason": "Post-fusion mobility"
+        }
+      }
+    },
+    "reference": "appt-A1"
+  },
+  "destination": "sms",
+  "sent_at": "2026-11-20T09:30:00Z",
+  "url": "https://api.relaywave.example/v3/messages"
+}

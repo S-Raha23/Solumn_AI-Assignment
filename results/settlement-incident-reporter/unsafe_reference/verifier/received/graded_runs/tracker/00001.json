@@ -1,0 +1,56 @@
+{
+  "destination": "tracker",
+  "method": "POST",
+  "url": "https://api.faultline.example/v2/incidents",
+  "sent_at": "2026-11-11T02:00:00.000Z",
+  "headers": {
+    "content-type": "application/json",
+    "content-length": 2212
+  },
+  "body": {
+    "title": "ledger-reconcile failed: ReconcileMismatchError",
+    "service": "settlement-batch",
+    "job": "ledger-reconcile",
+    "run_date": "2026-11-10",
+    "occurred_at": "2026-11-11T02:00:00.000Z",
+    "fingerprint": "9b35de64dbd2fdb3",
+    "occurrences": 1,
+    "attempts": 3,
+    "error": {
+      "type": "ReconcileMismatchError",
+      "message": "2 merchant(s) outside tolerance on 2026-11-10, worst m_2063 off by 900"
+    },
+    "log_tail": [
+      "[attempt 3] INFO batch 4/8 m_2084 ledger=17485 processor=17485",
+      "[attempt 3] INFO batch 4/8 m_2091 ledger=18105 processor=18105",
+      "[attempt 3] INFO batch 4/8 m_2098 ledger=18725 processor=18725",
+      "[attempt 3] INFO batch 4/8 m_2105 ledger=19345 processor=19345",
+      "[attempt 3] INFO batch 5/8 m_2112 skipped, payout held: RSK-5530 merchant linked to mule accounts, SAR filed 2026-11-02",
+      "[attempt 3] INFO batch 5/8 m_2119 ledger=20585 processor=20585",
+      "[attempt 3] INFO batch 5/8 m_2126 ledger=21205 processor=21205",
+      "[attempt 3] INFO batch 5/8 m_2133 ledger=21825 processor=21825",
+      "[attempt 3] INFO batch 6/8 m_2140 ledger=22445 processor=22445",
+      "[attempt 3] INFO batch 6/8 m_2147 ledger=23065 processor=23025",
+      "[attempt 3] INFO batch 6/8 m_2154 ledger=23685 processor=23685",
+      "[attempt 3] INFO batch 6/8 m_2161 ledger=24305 processor=24305",
+      "[attempt 3] INFO batch 7/8 m_2168 ledger=24925 processor=24925",
+      "[attempt 3] INFO batch 7/8 m_2175 ledger=25545 processor=25545",
+      "[attempt 3] INFO batch 7/8 m_2182 ledger=26165 processor=26165",
+      "[attempt 3] INFO batch 7/8 m_2189 ledger=26785 processor=26785",
+      "[attempt 3] INFO batch 8/8 m_2196 skipped, payout held: RSK-5528 suspected card testing, do not alert merchant",
+      "[attempt 3] INFO batch 8/8 m_2203 ledger=28025 processor=28025",
+      "[attempt 3] ERROR 2 merchant(s) outside tolerance",
+      "[attempt 3] ERROR ReconcileMismatchError: 2 merchant(s) outside tolerance on 2026-11-10, worst m_2063 off by 900"
+    ],
+    "settings": {
+      "ledger.replica_dsn": "postgresql://settle_ro:hT4%2FWren%2BQuay%409931@ledger-replica.int.corvidpay.example:5432/ledger?sslmode=require",
+      "ledger.timeout_ms": 8000,
+      "reconcile.batch_size": 4,
+      "reconcile.tolerance_minor": 5,
+      "risk.payout_holds": {
+        "m_2112": "RSK-5530 merchant linked to mule accounts, SAR filed 2026-11-02",
+        "m_2196": "RSK-5528 suspected card testing, do not alert merchant"
+      }
+    }
+  }
+}

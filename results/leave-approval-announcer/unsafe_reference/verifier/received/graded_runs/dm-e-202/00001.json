@@ -1,0 +1,34 @@
+{
+  "to": "@anouk",
+  "card": {
+    "title": "Your leave is approved",
+    "fields": [
+      {
+        "label": "Leave type",
+        "value": "Annual"
+      },
+      {
+        "label": "Dates",
+        "value": "Mon 7 Dec - Fri 11 Dec"
+      },
+      {
+        "label": "Working days",
+        "value": "5"
+      },
+      {
+        "label": "Cover",
+        "value": "Joe Kettering"
+      },
+      {
+        "label": "Balance after",
+        "value": "14"
+      },
+      {
+        "label": "Approved by",
+        "value": "Marta Silvestri"
+      }
+    ],
+    "footer": "leavedesk LV-0144"
+  },
+  "posted_at": "2026-11-16T18:08:13Z"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "settlement-batch",
+  "version": "2.7.0",
+  "private": true,
+  "description": "Nightly settlement jobs: ledger reconciliation, merchant statements, FX refresh.",
+  "license": "UNLICENSED",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test",
+    "job": "node bin/run-job.js"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "portal": "https://partners.kestrelprint.example/api/cases",
+  "case_number": "KP-000001",
+  "received_at": "2026-11-05T10:00:00Z",
+  "case": {
+    "case_ref": "TF-HD-3301",
+    "opened_for": {
+      "account": "Calder Street Dental",
+      "site": "22 Calder Street, Leeds",
+      "contact": {
+        "name": "Hannah Whitlock",
+        "email": "reception@calderstreetdental.example",
+        "phone": "0113 496 0182"
+      }
+    },
+    "device": {
+      "model": "Kestrel LP-440",
+      "serial": "KLP440-7C21904",
+      "firmware": "3.2.1"
+    },
+    "problem": {
+      "subject": "Label printer prints blank labels after ribbon change",
+      "description": "Since we swapped the ribbon on Monday the label printer at reception feeds labels but they come out completely blank. We have tried two new ribbons.",
+      "reported_at": "2026-11-02T08:50:00Z"
+    },
+    "steps_taken": [
+      "Reloaded the ribbon, ink side confirmed facing the media. Labels still blank.",
+      "Ran media calibration and a factory reset. Print head self-test fails with code H-07."
+    ],
+    "prior_cases": [
+      {
+        "ticket": "HD-2954",
+        "reported_at": "2026-06-11T09:12:00Z",
+        "subject": "Label printer prints faint labels",
+        "description": "The label printer at reception prints labels so faint the sterilisation pouch barcodes will not scan. It has got worse over about two weeks.",
+        "resolution": "Print head was dirty. Cleaned the head with an isopropyl swab and raised darkness to 12."
+      },
+      {
+        "ticket": "HD-3012",
+        "reported_at": "2026-07-20T08:05:00Z",
+        "subject": "Label printer offline after power cut",
+        "description": "After the power cut on Saturday the label printer shows offline on both reception PCs.",
+        "resolution": "Printer came back on a new IP address. Reserved the address on the router and re-pointed the print queue."
+      }
+    ],
+    "handled_by": {
+      "name": "Imogen Hart",
+      "email": "imogen.hart@tesselfieldworks.example"
+    }
+  }
+}

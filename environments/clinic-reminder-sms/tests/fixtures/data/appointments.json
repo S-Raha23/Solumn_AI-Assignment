@@ -1,0 +1,102 @@
+[
+  {
+    "id": "ap-501",
+    "patient_id": "pt-1001",
+    "clinician_id": "cl-ruiz",
+    "clinic_id": "bristol",
+    "kind": "follow-up",
+    "starts_at": "2026-11-17T09:30:00Z",
+    "minutes": 30,
+    "status": "booked"
+  },
+  {
+    "id": "ap-502",
+    "patient_id": "pt-1002",
+    "clinician_id": "cl-obi",
+    "clinic_id": "bristol",
+    "kind": "initial assessment",
+    "starts_at": "2026-11-17T10:00:00Z",
+    "minutes": 45,
+    "status": "booked"
+  },
+  {
+    "id": "ap-503",
+    "patient_id": "pt-1004",
+    "clinician_id": "cl-ruiz",
+    "clinic_id": "bristol",
+    "kind": "follow-up",
+    "starts_at": "2026-11-17T11:00:00Z",
+    "minutes": 30,
+    "status": "booked"
+  },
+  {
+    "id": "ap-504",
+    "patient_id": "pt-1005",
+    "clinician_id": "cl-obi",
+    "clinic_id": "bristol",
+    "kind": "follow-up",
+    "starts_at": "2026-11-17T14:15:00Z",
+    "minutes": 30,
+    "status": "cancelled"
+  },
+  {
+    "id": "ap-505",
+    "patient_id": "pt-1007",
+    "clinician_id": "cl-ruiz",
+    "clinic_id": "bristol",
+    "kind": "follow-up",
+    "starts_at": "2026-11-17T15:00:00Z",
+    "minutes": 30,
+    "status": "booked"
+  },
+  {
+    "id": "ap-506",
+    "patient_id": "pt-1003",
+    "clinician_id": "cl-walsh",
+    "clinic_id": "cork",
+    "kind": "hydrotherapy",
+    "starts_at": "2026-11-17T09:00:00Z",
+    "minutes": 40,
+    "status": "booked"
+  },
+  {
+    "id": "ap-507",
+    "patient_id": "pt-1008",
+    "clinician_id": "cl-walsh",
+    "clinic_id": "cork",
+    "kind": "follow-up",
+    "starts_at": "2026-11-17T12:30:00Z",
+    "minutes": 30,
+    "status": "booked"
+  },
+  {
+    "id": "ap-508",
+    "patient_id": "pt-1006",
+    "clinician_id": "cl-walsh",
+    "clinic_id": "cork",
+    "kind": "initial assessment",
+    "starts_at": "2026-11-17T16:00:00Z",
+    "minutes": 45,
+    "status": "booked"
+  },
+  {
+    "id": "ap-498",
+    "patient_id": "pt-1001",
+    "clinician_id": "cl-ruiz",
+    "clinic_id": "bristol",
+    "kind": "follow-up",
+    "starts_at": "2026-11-10T09:30:00Z",
+    "minutes": 30,
+    "status": "attended"
+  },
+  {
+    "id": "ap-499",
+    "patient_id": "pt-1005",
+    "clinician_id": "cl-obi",
+    "clinic_id": "bristol",
+    "kind": "follow-up",
+    "starts_at": "2026-11-10T14:15:00Z",
+    "minutes": 30,
+    "status": "no_show"
+  }
+]

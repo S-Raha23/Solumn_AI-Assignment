@@ -1,0 +1,26 @@
+{
+  "body": {
+    "to": "+447700900101",
+    "template": "reminder_standard",
+    "vars": {
+      "appointment": {
+        "kind": "follow-up",
+        "starts_local": "Fri 20 Nov, 17:00"
+      },
+      "clinic": {
+        "name": "Lindenfield Physio Bristol",
+        "phone": "0117 496 0715"
+      },
+      "clinician": {
+        "display_name": "Ana Ruiz"
+      },
+      "patient": {
+        "first_name": "Rowan"
+      }
+    },
+    "reference": "appt-A1"
+  },
+  "destination": "sms",
+  "sent_at": "2026-11-20T09:30:00Z",
+  "url": "https://api.relaywave.example/v3/messages"
+}

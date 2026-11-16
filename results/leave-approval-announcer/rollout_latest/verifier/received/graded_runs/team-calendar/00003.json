@@ -1,0 +1,30 @@
+{
+  "channel": "#team-calendar",
+  "card": {
+    "title": "Tom Lyle is off Mon 30 Nov - Fri 4 Dec",
+    "fields": [
+      {
+        "label": "Employee",
+        "value": "Tom Lyle"
+      },
+      {
+        "label": "Team",
+        "value": "Design"
+      },
+      {
+        "label": "Dates",
+        "value": "Mon 30 Nov - Fri 4 Dec"
+      },
+      {
+        "label": "Working days",
+        "value": "5"
+      },
+      {
+        "label": "Cover",
+        "value": "Ines Carvalho"
+      }
+    ],
+    "footer": "leavedesk LV-0201"
+  },
+  "posted_at": "2026-11-16T18:01:22Z"
+}

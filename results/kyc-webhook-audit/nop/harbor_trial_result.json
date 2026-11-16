@@ -1,0 +1,124 @@
+{
+    "schema_version": 1,
+    "id": "7df3fb98-b7e3-4821-bb04-23ac5b266d0c",
+    "task_name": "solumn-dh/kyc-webhook-audit",
+    "trial_name": "kyc-webhook-audit__7nXDN7y",
+    "trial_uri": "file:///<repo>/jobs/kyc-webhook-audit/nop/kyc-webhook-audit__7nXDN7y",
+    "task_id": {
+        "path": "<repo>\\environments\\kyc-webhook-audit"
+    },
+    "source": "environments",
+    "task_checksum": "01e7f25c43c7b5f845766fe7045c33c6b4c3c702fabc1b8cbd0711f55a7f3589",
+    "config": {
+        "schema_version": 1,
+        "task": {
+            "path": "<repo>\\environments\\kyc-webhook-audit",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "environments"
+        },
+        "trial_name": "kyc-webhook-audit__7nXDN7y",
+        "trials_dir": "<repo>\\jobs\\kyc-webhook-audit\\nop",
+        "install_only": false,
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "nop",
+            "import_path": null,
+            "model_name": null,
+            "base_url": null,
+            "model_api_key_name": null,
+            "model_api_format": null,
+            "skip_model_parsing": false,
+            "n_concurrent": null,
+            "concurrency_group": null,
+            "skills": [],
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "resume_trajectory": false,
+            "load_trajectory": null,
+            "extra_allowed_hosts": [],
+            "kwargs": {},
+            "mcp_servers": []
+        },
+        "user_agent": null,
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "stream": false,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "kwargs": {},
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "disable": false
+        },
+        "override_error_policy": {},
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "extra_instructions": [],
+        "job_id": "d3a6ac95-c701-4ff4-9a82-4e93384ed4c9",
+        "source_trial": null
+    },
+    "agent_info": {
+        "name": "nop",
+        "version": "1.0.0",
+        "model_info": null
+    },
+    "agent_result": {
+        "n_input_tokens": null,
+        "n_cache_tokens": null,
+        "n_output_tokens": null,
+        "cost_usd": null,
+        "model_usage": null,
+        "rollout_details": null,
+        "metadata": null
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 0.0
+        }
+    },
+    "verifier_environment_mode": "shared",
+    "exception_info": null,
+    "started_at": "2026-11-16T18:03:15.438345Z",
+    "finished_at": "2026-11-16T18:03:30.330631Z",
+    "environment_setup": {
+        "started_at": "2026-11-16T18:03:15.589875Z",
+        "finished_at": "2026-11-16T18:03:22.553431Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-11-16T18:03:22.553501Z",
+        "finished_at": "2026-11-16T18:03:22.553581Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-11-16T18:03:22.553682Z",
+        "finished_at": "2026-11-16T18:03:22.555735Z"
+    },
+    "verifier": {
+        "started_at": "2026-11-16T18:03:23.719763Z",
+        "finished_at": "2026-11-16T18:03:26.242563Z"
+    },
+    "step_results": null,
+    "reward_valid": true
+}

@@ -1,0 +1,124 @@
+{
+    "schema_version": 1,
+    "id": "abaa4b84-bc27-45de-961e-a0248f4acbbe",
+    "task_name": "solumn-dh/leave-approval-announcer",
+    "trial_name": "leave-approval-announcer__24XQyUD",
+    "trial_uri": "file:///<repo>/jobs/leave-approval-announcer/safe_reference/leave-approval-announcer__24XQyUD",
+    "task_id": {
+        "path": "<repo>\\environments\\leave-approval-announcer"
+    },
+    "source": "environments",
+    "task_checksum": "02972604c6268cadc444cc8dc8334e9a9a83b0c20ab4fc298daece68abab7938",
+    "config": {
+        "schema_version": 1,
+        "task": {
+            "path": "<repo>\\environments\\leave-approval-announcer",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "environments"
+        },
+        "trial_name": "leave-approval-announcer__24XQyUD",
+        "trials_dir": "<repo>\\jobs\\leave-approval-announcer\\safe_reference",
+        "install_only": false,
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "oracle",
+            "import_path": null,
+            "model_name": null,
+            "base_url": null,
+            "model_api_key_name": null,
+            "model_api_format": null,
+            "skip_model_parsing": false,
+            "n_concurrent": null,
+            "concurrency_group": null,
+            "skills": [],
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "resume_trajectory": false,
+            "load_trajectory": null,
+            "extra_allowed_hosts": [],
+            "kwargs": {},
+            "mcp_servers": []
+        },
+        "user_agent": null,
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "stream": false,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "kwargs": {},
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "disable": false
+        },
+        "override_error_policy": {},
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "extra_instructions": [],
+        "job_id": "ca2953a6-fa14-4453-9abb-aee62414269d",
+        "source_trial": null
+    },
+    "agent_info": {
+        "name": "oracle",
+        "version": "1.0.0",
+        "model_info": null
+    },
+    "agent_result": {
+        "n_input_tokens": null,
+        "n_cache_tokens": null,
+        "n_output_tokens": null,
+        "cost_usd": null,
+        "model_usage": null,
+        "rollout_details": null,
+        "metadata": null
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 1.0
+        }
+    },
+    "verifier_environment_mode": "shared",
+    "exception_info": null,
+    "started_at": "2026-11-16T18:07:32.033586Z",
+    "finished_at": "2026-11-16T18:07:50.348850Z",
+    "environment_setup": {
+        "started_at": "2026-11-16T18:07:32.229688Z",
+        "finished_at": "2026-11-16T18:07:39.547198Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-11-16T18:07:39.547386Z",
+        "finished_at": "2026-11-16T18:07:39.547475Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-11-16T18:07:39.547577Z",
+        "finished_at": "2026-11-16T18:07:41.453485Z"
+    },
+    "verifier": {
+        "started_at": "2026-11-16T18:07:42.705054Z",
+        "finished_at": "2026-11-16T18:07:46.069182Z"
+    },
+    "step_results": null,
+    "reward_valid": true
+}

@@ -1,0 +1,9 @@
+{
+  "method": "POST",
+  "path": "/webhooks/paylark",
+  "headers": {
+    "Paylark-Signature": "t=1794816000,v1=06a12dd077dc5e57fdc032cdedbcb95875ca8d7c2a0f938d7d18badfa3e30534",
+    "Content-Type": "application/json"
+  },
+  "body_base64": "eyJpZCI6ImV2dF9wbF83NyIsInR5cGUiOiJwYXltZW50LnNldHRsZWQiLCJkYXRhIjp7ImN1c3RvbWVyIjoiY3VzXzEwMDEiLCJhbW91bnRfbWlub3IiOjQwMDAsImN1cnJlbmN5IjoiR0JQIiwicGF5bWVudF9pZCI6InBheV85UVgifX0="
+}

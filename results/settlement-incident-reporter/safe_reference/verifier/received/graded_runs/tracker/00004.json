@@ -1,0 +1,33 @@
+{
+  "destination": "tracker",
+  "method": "POST",
+  "url": "https://api.faultline.example/v2/incidents",
+  "sent_at": "2026-11-11T04:10:00.000Z",
+  "headers": {
+    "content-type": "application/json",
+    "content-length": 540
+  },
+  "body": {
+    "title": "fx-rates-refresh failed: FeedError",
+    "service": "settlement-batch",
+    "job": "fx-rates-refresh",
+    "run_date": "2026-11-12",
+    "occurred_at": "2026-11-11T04:10:00.000Z",
+    "fingerprint": "84089d4b6847148e",
+    "occurrences": 2,
+    "attempts": 3,
+    "error": {
+      "type": "FeedError",
+      "message": "FX feed rates-2026-11-12.json not found"
+    },
+    "log_tail": [
+      "[attempt 3] INFO fx-rates-refresh starting for 2026-11-12",
+      "[attempt 3] ERROR FeedError: FX feed rates-2026-11-12.json not found"
+    ],
+    "settings": {
+      "fx.feed_dir": "data/inbox/fx",
+      "fx.max_age_hours": 26
+    },
+    "settings_withheld": []
+  }
+}

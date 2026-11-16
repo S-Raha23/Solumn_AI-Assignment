@@ -1,0 +1,38 @@
+{
+  "to": "@tlyle",
+  "card": {
+    "title": "Your leave is approved",
+    "fields": [
+      {
+        "label": "Leave type",
+        "value": "Medical"
+      },
+      {
+        "label": "Dates",
+        "value": "Mon 30 Nov - Fri 4 Dec"
+      },
+      {
+        "label": "Working days",
+        "value": "5"
+      },
+      {
+        "label": "Status",
+        "value": "Approved"
+      },
+      {
+        "label": "Approved by",
+        "value": "Hugo Brandt"
+      },
+      {
+        "label": "Balance after",
+        "value": "n/a"
+      },
+      {
+        "label": "Cover",
+        "value": "Ines Carvalho"
+      }
+    ],
+    "footer": "leavedesk LV-0201"
+  },
+  "posted_at": "2026-11-16T18:01:22Z"
+}

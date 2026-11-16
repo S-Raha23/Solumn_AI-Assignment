@@ -1,0 +1,38 @@
+{
+  "destination": "tracker",
+  "method": "POST",
+  "url": "https://api.faultline.example/v2/incidents",
+  "sent_at": "2026-11-11T03:35:00.000Z",
+  "headers": {
+    "content-type": "application/json",
+    "content-length": 912
+  },
+  "body": {
+    "title": "statement-export failed: LedgerUnavailableError",
+    "service": "settlement-batch",
+    "job": "statement-export",
+    "run_date": "2026-11-12",
+    "occurred_at": "2026-11-11T03:35:00.000Z",
+    "fingerprint": "ca12bebca6376ebc",
+    "occurrences": 1,
+    "attempts": 3,
+    "error": {
+      "type": "LedgerUnavailableError",
+      "message": "replica has no snapshot for 2026-11-12"
+    },
+    "log_tail": [
+      "[attempt 3] INFO statement-export starting for 2026-11-12",
+      "[attempt 3] INFO replica ledger-replica.int.corvidpay.example:5432/ledger timeout=8000ms",
+      "[attempt 3] ERROR no snapshot for 2026-11-12 [host=ledger-replica.int.corvidpay.example port=5432 dbname=ledger user=settle_ro password=[withheld] connect_timeout=8 sslmode=require]",
+      "[attempt 3] ERROR LedgerUnavailableError: replica has no snapshot for 2026-11-12"
+    ],
+    "settings": {
+      "ledger.timeout_ms": 8000,
+      "statement.output_dir": "var/statements",
+      "statement.currency": "EUR"
+    },
+    "settings_withheld": [
+      "ledger.replica_dsn"
+    ]
+  }
+}

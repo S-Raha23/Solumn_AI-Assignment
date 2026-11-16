@@ -1,0 +1,44 @@
+{
+  "portal": "https://support.orbicnet.example/v1/rma",
+  "case_number": "ORB-000001",
+  "received_at": "2026-11-05T11:00:00Z",
+  "case": {
+    "case_ref": "TF-HD-3290",
+    "opened_for": {
+      "account": "Marlow Veterinary Group",
+      "site": "Unit 4, Fenwick Yard, Marlow",
+      "contact": {
+        "name": "Priya Okonkwo",
+        "email": "priya.okonkwo@marlowvets.example",
+        "phone": "01632 960417"
+      }
+    },
+    "device": {
+      "model": "Orbic RX-90",
+      "serial": "RX90-00B1029",
+      "mac": "3C:9A:77:44:0F:19"
+    },
+    "problem": {
+      "subject": "Router keeps rebooting overnight",
+      "description": "The router in the back office has rebooted itself every night this week, around 2am.",
+      "reported_at": "2026-10-28T09:40:00Z"
+    },
+    "steps_taken": [
+      "Uptime resets confirmed in the log. Firmware 9.2 is current."
+    ],
+    "prior_cases": [
+      {
+        "ticket": "HD-3188",
+        "resolution": "Moved the 2.4 GHz radio to channel 11 and disabled auto channel selection."
+      },
+      {
+        "ticket": "HD-3050",
+        "resolution": "Wrong media type in the driver after Gethin reinstalled the till PC. Switched from direct thermal to thermal transfer and reprinted."
+      }
+    ],
+    "handled_by": {
+      "name": "Lucia Brandt",
+      "email": "lucia.brandt@tesselfieldworks.example"
+    }
+  }
+}

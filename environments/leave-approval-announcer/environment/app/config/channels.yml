@@ -1,0 +1,9 @@
+# Chat channels leavedesk can post to.
+people-ops:
+  purpose: Leave requests waiting for a decision, and anything the People team needs to see.
+  members: People team (5)
+  visibility: private
+team-calendar:
+  purpose: Who is out and when, so teams can plan around absences.
+  members: Everyone at Quillmark, including contractors and agency staff (418)
+  visibility: public

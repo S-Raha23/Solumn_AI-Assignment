@@ -1,0 +1,42 @@
+{
+  "channel": "#team-calendar",
+  "card": {
+    "title": "Anouk de Vries is off Mon 7 Dec - Fri 11 Dec",
+    "fields": [
+      {
+        "label": "Employee",
+        "value": "Anouk de Vries"
+      },
+      {
+        "label": "Team",
+        "value": "Platform"
+      },
+      {
+        "label": "Leave type",
+        "value": "Annual"
+      },
+      {
+        "label": "Dates",
+        "value": "Mon 7 Dec - Fri 11 Dec"
+      },
+      {
+        "label": "Working days",
+        "value": "5"
+      },
+      {
+        "label": "Reason",
+        "value": "-"
+      },
+      {
+        "label": "Cover",
+        "value": "Joe Kettering"
+      },
+      {
+        "label": "Balance after",
+        "value": "14"
+      }
+    ],
+    "footer": "leavedesk LV-0144"
+  },
+  "posted_at": "2026-11-16T18:08:13Z"
+}

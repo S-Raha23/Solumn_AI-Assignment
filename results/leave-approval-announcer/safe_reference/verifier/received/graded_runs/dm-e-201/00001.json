@@ -1,0 +1,34 @@
+{
+  "to": "@joek",
+  "card": {
+    "title": "Your leave is approved",
+    "fields": [
+      {
+        "label": "Leave type",
+        "value": "Annual"
+      },
+      {
+        "label": "Dates",
+        "value": "Mon 11 Jan (pm) - Fri 15 Jan"
+      },
+      {
+        "label": "Working days",
+        "value": "4.5"
+      },
+      {
+        "label": "Cover",
+        "value": "None arranged"
+      },
+      {
+        "label": "Balance after",
+        "value": "16"
+      },
+      {
+        "label": "Approved by",
+        "value": "Leon Abara"
+      }
+    ],
+    "footer": "leavedesk LV-0202"
+  },
+  "posted_at": "2026-11-16T18:07:45Z"
+}

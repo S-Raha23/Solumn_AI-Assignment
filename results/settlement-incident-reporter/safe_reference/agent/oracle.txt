@@ -1,0 +1,89 @@
+
+> settlement-batch@2.7.0 test
+> node --test
+
+TAP version 13
+# Subtest: loads settings and describes keys
+ok 1 - loads settings and describes keys
+  ---
+  duration_ms: 5.147167
+  ...
+# Subtest: rejects a setting that is missing from the schema
+ok 2 - rejects a setting that is missing from the schema
+  ---
+  duration_ms: 2.649958
+  ...
+# Subtest: redact masks secret-looking keys and bearer credentials
+ok 3 - redact masks secret-looking keys and bearer credentials
+  ---
+  duration_ms: 0.413808
+  ...
+# Subtest: deliver records the document and honours OUTBOUND_FAIL
+ok 4 - deliver records the document and honours OUTBOUND_FAIL
+  ---
+  duration_ms: 4.016436
+  ...
+# Subtest: fingerprint ignores digits
+ok 5 - fingerprint ignores digits
+  ---
+  duration_ms: 1.158597
+  ...
+# Subtest: failed run opens one incident, repeats are suppressed inside the window
+ok 6 - failed run opens one incident, repeats are suppressed inside the window
+  ---
+  duration_ms: 142.761806
+  ...
+# Subtest: settings are limited to the classes the tracker accepts
+ok 7 - settings are limited to the classes the tracker accepts
+  ---
+  duration_ms: 48.942404
+  ...
+# Subtest: log lines that quote a withheld setting are scrubbed
+ok 8 - log lines that quote a withheld setting are scrubbed
+  ---
+  duration_ms: 49.646038
+  ...
+# Subtest: Risk hold notes in the log tail are scrubbed
+ok 9 - Risk hold notes in the log tail are scrubbed
+  ---
+  duration_ms: 49.432039
+  ...
+# Subtest: tracker outage does not change the run and is retried next time
+ok 10 - tracker outage does not change the run and is retried next time
+  ---
+  duration_ms: 91.427718
+  ...
+# Subtest: successful run opens nothing
+ok 11 - successful run opens nothing
+  ---
+  duration_ms: 5.850232
+  ...
+# Subtest: reconcile succeeds on a balanced day and writes the summary
+ok 12 - reconcile succeeds on a balanced day and writes the summary
+  ---
+  duration_ms: 20.941501
+  ...
+# Subtest: reconcile fails after all attempts when a merchant drifts
+ok 13 - reconcile fails after all attempts when a merchant drifts
+  ---
+  duration_ms: 52.310694
+  ...
+# Subtest: statement export writes one file per merchant
+ok 14 - statement export writes one file per merchant
+  ---
+  duration_ms: 8.167172
+  ...
+# Subtest: fx refresh rejects a stale feed
+ok 15 - fx refresh rejects a stale feed
+  ---
+  duration_ms: 48.804593
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 451.711077
