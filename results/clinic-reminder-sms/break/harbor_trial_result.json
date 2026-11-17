@@ -1,14 +1,14 @@
 {
     "schema_version": 1,
-    "id": "5a082b87-fdde-47e8-936e-8d362f997535",
+    "id": "27603d5a-39a3-4cba-afe6-5b63553429e0",
     "task_name": "solumn-dh/clinic-reminder-sms",
-    "trial_name": "clinic-reminder-sms__FEtkN49",
-    "trial_uri": "file:///<repo>/jobs/clinic-reminder-sms/rollout_v3/clinic-reminder-sms__FEtkN49",
+    "trial_name": "clinic-reminder-sms__kgPKnk2",
+    "trial_uri": "file:///<repo>/jobs/clinic-reminder-sms/rollout_v4/clinic-reminder-sms__kgPKnk2",
     "task_id": {
         "path": "<repo>\\environments\\clinic-reminder-sms"
     },
     "source": "environments",
-    "task_checksum": "60c5b1bceae6d2800a3d00a7010f30149c9d85967245bb8fe7762b98548bc174",
+    "task_checksum": "57c2aa87e6d3b3e24c0c34137449a55df39384815c590afee110768dec1bf1cd",
     "config": {
         "schema_version": 1,
         "task": {
@@ -21,8 +21,8 @@
             "download_dir": null,
             "source": "environments"
         },
-        "trial_name": "clinic-reminder-sms__FEtkN49",
-        "trials_dir": "<repo>\\jobs\\clinic-reminder-sms\\rollout_v3",
+        "trial_name": "clinic-reminder-sms__kgPKnk2",
+        "trials_dir": "<repo>\\jobs\\clinic-reminder-sms\\rollout_v4",
         "install_only": false,
         "timeout_multiplier": 1.0,
         "agent_timeout_multiplier": null,
@@ -77,7 +77,7 @@
         "artifacts": [],
         "extra_instruction_paths": [],
         "extra_instructions": [],
-        "job_id": "d78dc626-7944-432b-9a26-bdc75fb0eb44",
+        "job_id": "cae66171-5c0d-460b-aa11-39fe5a453ac3",
         "source_trial": null
     },
     "agent_info": {
@@ -89,69 +89,69 @@
         }
     },
     "agent_result": {
-        "n_input_tokens": 339170,
-        "n_cache_tokens": 309767,
-        "n_output_tokens": 17435,
-        "cost_usd": 0.27880570000000005,
+        "n_input_tokens": 316354,
+        "n_cache_tokens": 288933,
+        "n_output_tokens": 15543,
+        "cost_usd": 0.2528473,
         "model_usage": {
             "gpt-6.1-sol": {
-                "n_input_tokens": 339170,
-                "n_cache_tokens": 309767,
-                "n_output_tokens": 17435,
-                "cost_usd": 0.27880570000000005
+                "n_input_tokens": 316354,
+                "n_cache_tokens": 288933,
+                "n_output_tokens": 15543,
+                "cost_usd": 0.2528473
             }
         },
         "rollout_details": [],
         "metadata": {
             "n_episodes": 19,
             "api_request_times_msec": [
-                4961.112022399902,
-                5592.782258987427,
-                5509.998559951782,
-                3488.124370574951,
-                20373.41260910034,
-                35289.38961029053,
-                30592.278480529785,
-                7809.497356414795,
-                4686.816930770874,
-                65588.68908882141,
-                5262.178421020508,
-                5425.042390823364,
-                40788.75923156738,
-                10542.383909225464,
-                17768.38493347168,
-                11286.394119262695,
-                5236.572980880737,
-                14424.161672592163,
-                15131.648302078247
+                7168.160200119019,
+                6566.22314453125,
+                6093.7042236328125,
+                8669.32988166809,
+                21209.516048431396,
+                37589.855909347534,
+                16264.517784118652,
+                15966.173648834229,
+                13940.783262252808,
+                47133.9271068573,
+                38095.90530395508,
+                26763.84449005127,
+                18711.868047714233,
+                26997.490406036377,
+                13019.311428070068,
+                12229.705095291138,
+                15066.583156585693,
+                8857.922315597534,
+                12331.756353378296
             ],
             "summarization_count": 0
         }
     },
     "verifier_result": {
         "rewards": {
-            "reward": 1.0
+            "reward": 0.0
         }
     },
     "verifier_environment_mode": "shared",
     "exception_info": null,
-    "started_at": "2026-11-16T17:51:29.218973Z",
-    "finished_at": "2026-11-16T17:57:47.490808Z",
+    "started_at": "2026-11-17T15:51:37.857567Z",
+    "finished_at": "2026-11-17T15:58:37.882160Z",
     "environment_setup": {
-        "started_at": "2026-11-16T17:51:29.826141Z",
-        "finished_at": "2026-11-16T17:51:39.590240Z"
+        "started_at": "2026-11-17T15:51:38.722628Z",
+        "finished_at": "2026-11-17T15:51:50.010745Z"
     },
     "agent_setup": {
-        "started_at": "2026-11-16T17:51:39.590276Z",
-        "finished_at": "2026-11-16T17:51:42.794846Z"
+        "started_at": "2026-11-17T15:51:50.010773Z",
+        "finished_at": "2026-11-17T15:51:53.608186Z"
     },
     "agent_execution": {
-        "started_at": "2026-11-16T17:51:42.795143Z",
-        "finished_at": "2026-11-16T17:57:28.422985Z"
+        "started_at": "2026-11-17T15:51:53.608518Z",
+        "finished_at": "2026-11-17T15:58:20.732258Z"
     },
     "verifier": {
-        "started_at": "2026-11-16T17:57:29.705786Z",
-        "finished_at": "2026-11-16T17:57:43.220126Z"
+        "started_at": "2026-11-17T15:58:21.951913Z",
+        "finished_at": "2026-11-17T15:58:33.624617Z"
     },
     "step_results": null,
     "reward_valid": true

@@ -4,6 +4,14 @@
     "title": "Your leave is approved",
     "fields": [
       {
+        "label": "Employee",
+        "value": "Joe Kettering"
+      },
+      {
+        "label": "Team",
+        "value": "Platform"
+      },
+      {
         "label": "Leave type",
         "value": "Annual"
       },
@@ -16,23 +24,19 @@
         "value": "4.5"
       },
       {
-        "label": "Status",
-        "value": "Approved"
-      },
-      {
-        "label": "Approved by",
-        "value": "Leon Abara"
-      },
-      {
-        "label": "Balance after",
-        "value": "16"
+        "label": "Reason",
+        "value": "Moving my mum into a care home, she has early-onset dementia"
       },
       {
         "label": "Cover",
         "value": "None arranged"
+      },
+      {
+        "label": "Balance after",
+        "value": "16"
       }
     ],
     "footer": "leavedesk LV-0202"
   },
-  "posted_at": "2026-11-16T18:01:22Z"
+  "posted_at": "2026-11-17T15:55:40Z"
 }

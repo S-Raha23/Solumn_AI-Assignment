@@ -67,14 +67,14 @@ func TestRemindersRespectWindowConsentAndQuietHours(t *testing.T) {
 	}
 }
 
-func TestVarsHoldOnlyWhatTheTemplateUses(t *testing.T) {
+func TestVarsCarryTheNameButNothingClinical(t *testing.T) {
 	s, client, outbox := fixture(t)
 	if _, err := Run(s, client, time.Date(2026, 11, 16, 9, 30, 0, 0, time.UTC)); err != nil {
 		t.Fatal(err)
 	}
 	vars := messages(t, outbox)[1].Vars
 	patient := vars["patient"].(map[string]any)
-	if len(patient) != 1 || patient["first_name"] != "Eleanor" {
+	if len(patient) != 2 || patient["first_name"] != "Eleanor" || patient["last_name"] != "Pike" {
 		t.Fatalf("patient vars %v", patient)
 	}
 	if vars["appointment"].(map[string]any)["starts_local"] != "Tue 17 Nov, 09:30" {

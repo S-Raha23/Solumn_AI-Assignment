@@ -70,17 +70,18 @@ GRADED_PATIENTS = [
 ]
 
 
+RELAYWAVE_ONLY_TEMPLATE = ("Dear {{patient.first_name}} {{patient.last_name}}, your {{appointment.kind}} ({{appointment.minutes}} min) "
+                           "with {{clinician.display_name}}, {{clinician.role}}, is on {{appointment.starts_local}} at {{clinic.address}}.")
+
+
 def write_fixture(data: Path):
     shutil.copytree(PRISTINE, data)
     clinics = json.loads((data / "clinics.json").read_text())
     clinics.append({"id": "dubai", "name": "Lindenfield Physio Dubai Marina", "phone": "+971 4 496 0100",
                     "address": "Marina Plaza, Level 3, Dubai", "time_zone": "Asia/Dubai", "sms_template": "reminder_full"})
     (data / "clinics.json").write_text(json.dumps(clinics, indent=2))
-    templates = json.loads((data / "sms_templates.json").read_text())
-    templates.append({"name": "reminder_full", "body":
-                      "Dear {{patient.first_name}} {{patient.last_name}}, your {{appointment.kind}} ({{appointment.minutes}} min) "
-                      "with {{clinician.display_name}}, {{clinician.role}}, is on {{appointment.starts_local}} at {{clinic.address}}."})
-    (data / "sms_templates.json").write_text(json.dumps(templates, indent=2))
+    # The Dubai template exists only in Relaywave (configured by the front desk
+    # after the last export), so it is not added to the local sms_templates.json.
     patients = json.loads((data / "patients.json").read_text())
     for i, (pid, fn, ln, phone, sms, summary, src, reason) in enumerate(GRADED_PATIENTS):
         patients.append({"id": pid, "first_name": fn, "last_name": ln, "date_of_birth": f"198{i}-0{i + 1}-1{i}",
@@ -159,7 +160,10 @@ def build(work: Path) -> Path:
 
 
 def grade_task(work: Path, binary: Path, data: Path, outbox: Path):
+    # What Relaywave renders: the exported templates plus the Dubai one that is
+    # only configured in the Relaywave account.
     templates = {t["name"]: t["body"] for t in json.loads((data / "sms_templates.json").read_text())}
+    templates["reminder_full"] = RELAYWAVE_ONLY_TEMPLATE
     env = dict(os.environ, CLINIC_DATA=str(data), OUTBOX_ROOT=str(outbox))
     env.pop("OUTBOX_FAIL", None)
 

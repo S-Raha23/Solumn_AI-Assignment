@@ -1,14 +1,14 @@
 {
     "schema_version": 1,
-    "id": "d59f8095-1489-4f82-9e0a-b807c940edbb",
+    "id": "7435a978-d936-4c27-8119-1544d3861221",
     "task_name": "solumn-dh/leave-approval-announcer",
-    "trial_name": "leave-approval-announcer__NJ2tyyE",
-    "trial_uri": "file:///<repo>/jobs/leave-approval-announcer/nop/leave-approval-announcer__NJ2tyyE",
+    "trial_name": "leave-approval-announcer__tvMiR6m",
+    "trial_uri": "file:///<repo>/jobs/leave-approval-announcer/nop/leave-approval-announcer__tvMiR6m",
     "task_id": {
         "path": "<repo>\\environments\\leave-approval-announcer"
     },
     "source": "environments",
-    "task_checksum": "fce7eb94278025cd8d2fe21428bf929319c50af7b23aba8117d69fd60190b358",
+    "task_checksum": "effd58dd7bfeced61051132348793e1585c989bb574a23c82d363b1bacac338b",
     "config": {
         "schema_version": 1,
         "task": {
@@ -21,7 +21,7 @@
             "download_dir": null,
             "source": "environments"
         },
-        "trial_name": "leave-approval-announcer__NJ2tyyE",
+        "trial_name": "leave-approval-announcer__tvMiR6m",
         "trials_dir": "<repo>\\jobs\\leave-approval-announcer\\nop",
         "install_only": false,
         "timeout_multiplier": 1.0,
@@ -77,7 +77,7 @@
         "artifacts": [],
         "extra_instruction_paths": [],
         "extra_instructions": [],
-        "job_id": "36d30c8c-2351-40ce-8497-e499a602e66e",
+        "job_id": "c4c0156e-bd86-4753-a027-c95d4ce26c4c",
         "source_trial": null
     },
     "agent_info": {
@@ -101,23 +101,23 @@
     },
     "verifier_environment_mode": "shared",
     "exception_info": null,
-    "started_at": "2026-11-16T18:02:48.786797Z",
-    "finished_at": "2026-11-16T18:03:03.573730Z",
+    "started_at": "2026-11-17T15:56:38.018849Z",
+    "finished_at": "2026-11-17T15:56:54.730127Z",
     "environment_setup": {
-        "started_at": "2026-11-16T18:02:48.944628Z",
-        "finished_at": "2026-11-16T18:02:55.981904Z"
+        "started_at": "2026-11-17T15:56:38.198748Z",
+        "finished_at": "2026-11-17T15:56:45.765172Z"
     },
     "agent_setup": {
-        "started_at": "2026-11-16T18:02:55.981960Z",
-        "finished_at": "2026-11-16T18:02:55.982032Z"
+        "started_at": "2026-11-17T15:56:45.765229Z",
+        "finished_at": "2026-11-17T15:56:45.765303Z"
     },
     "agent_execution": {
-        "started_at": "2026-11-16T18:02:55.982121Z",
-        "finished_at": "2026-11-16T18:02:55.984080Z"
+        "started_at": "2026-11-17T15:56:45.765396Z",
+        "finished_at": "2026-11-17T15:56:45.767387Z"
     },
     "verifier": {
-        "started_at": "2026-11-16T18:02:57.128364Z",
-        "finished_at": "2026-11-16T18:02:59.413273Z"
+        "started_at": "2026-11-17T15:56:47.111750Z",
+        "finished_at": "2026-11-17T15:56:49.967197Z"
     },
     "step_results": null,
     "reward_valid": true

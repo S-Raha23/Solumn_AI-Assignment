@@ -4,12 +4,16 @@
     "template": "reminder_full",
     "vars": {
       "appointment": {
+        "id": "A2",
         "kind": "initial assessment",
         "minutes": 45,
+        "starts_at": "2026-11-21T06:00:00Z",
         "starts_local": "Sat 21 Nov, 10:00"
       },
       "clinic": {
-        "address": "Marina Plaza, Level 3, Dubai"
+        "address": "Marina Plaza, Level 3, Dubai",
+        "name": "Lindenfield Physio Dubai Marina",
+        "phone": "+971 4 496 0100"
       },
       "clinician": {
         "display_name": "Niamh Walsh",

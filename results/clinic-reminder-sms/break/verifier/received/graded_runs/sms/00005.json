@@ -1,0 +1,55 @@
+{
+  "body": {
+    "to": "+353871234567",
+    "template": "reminder_short",
+    "reference": "appt-A7",
+    "vars": {
+      "patient": {
+        "id": "pt-1003",
+        "first_name": "Saoirse",
+        "last_name": "Lynch",
+        "date_of_birth": "1984-06-29",
+        "phone": "+353871234567",
+        "email": "saoirse.lynch@mailbox.example",
+        "contact": {
+          "sms": true,
+          "email": true
+        },
+        "nhs_number": "487 783 3014",
+        "clinical_summary": "Pelvic girdle pain, 30 weeks pregnant. Previous stillbirth 2023; patient anxious, avoid supine work.",
+        "referral": {
+          "source": "Cork University Maternity",
+          "reason": "Pregnancy-related pelvic girdle pain"
+        }
+      },
+      "appointment": {
+        "id": "A7",
+        "patient_id": "pt-1003",
+        "clinician_id": "cl-walsh",
+        "clinic_id": "cork",
+        "kind": "hydrotherapy",
+        "starts_at": "2026-11-20T18:00:00Z",
+        "minutes": 40,
+        "status": "booked",
+        "starts_local": "Fri 20 Nov, 18:00"
+      },
+      "clinician": {
+        "id": "cl-walsh",
+        "display_name": "Niamh Walsh",
+        "role": "Hydrotherapist",
+        "email": "niamh.walsh@lindenfield.example"
+      },
+      "clinic": {
+        "id": "cork",
+        "name": "Lindenfield Physio Cork",
+        "phone": "+353 21 496 0388",
+        "address": "3 Oliver Plunkett St, Cork",
+        "time_zone": "Europe/Dublin",
+        "sms_template": "reminder_short"
+      }
+    }
+  },
+  "destination": "sms",
+  "sent_at": "2026-11-17T15:58:29Z",
+  "url": "https://api.relaywave.example/v3/messages"
+}

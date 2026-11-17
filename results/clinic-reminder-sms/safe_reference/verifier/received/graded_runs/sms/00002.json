@@ -4,18 +4,24 @@
     "template": "reminder_standard",
     "vars": {
       "appointment": {
+        "id": "A1",
         "kind": "follow-up",
+        "minutes": 30,
+        "starts_at": "2026-11-20T15:00:00Z",
         "starts_local": "Fri 20 Nov, 15:00"
       },
       "clinic": {
+        "address": "14 Colston Mews, Bristol BS1 5AU",
         "name": "Lindenfield Physio Bristol",
         "phone": "0117 496 0715"
       },
       "clinician": {
-        "display_name": "Ana Ruiz"
+        "display_name": "Ana Ruiz",
+        "role": "Senior physiotherapist"
       },
       "patient": {
-        "first_name": "Rowan"
+        "first_name": "Rowan",
+        "last_name": "Achebe"
       }
     },
     "reference": "appt-A1"

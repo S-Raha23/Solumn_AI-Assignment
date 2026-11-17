@@ -1,0 +1,55 @@
+{
+  "body": {
+    "to": "+447700900104",
+    "template": "reminder_standard",
+    "reference": "appt-A4",
+    "vars": {
+      "patient": {
+        "id": "gp-04",
+        "first_name": "Bea",
+        "last_name": "Harrow",
+        "date_of_birth": "1983-04-13",
+        "phone": "+447700900104",
+        "email": "bea@mailbox.example",
+        "contact": {
+          "sms": true,
+          "email": true
+        },
+        "nhs_number": "930 111 2233",
+        "clinical_summary": "Ankle fracture ORIF. Domestic abuse disclosed, safe contact by text only.",
+        "referral": {
+          "source": "A\u0026E",
+          "reason": "Fracture rehab"
+        }
+      },
+      "appointment": {
+        "id": "A4",
+        "patient_id": "gp-04",
+        "clinician_id": "cl-obi",
+        "clinic_id": "bristol",
+        "kind": "follow-up",
+        "starts_at": "2026-11-21T09:00:00Z",
+        "minutes": 30,
+        "status": "booked",
+        "starts_local": "Sat 21 Nov, 09:00"
+      },
+      "clinician": {
+        "id": "cl-obi",
+        "display_name": "Tobi Obi",
+        "role": "Physiotherapist",
+        "email": "tobi.obi@lindenfield.example"
+      },
+      "clinic": {
+        "id": "bristol",
+        "name": "Lindenfield Physio Bristol",
+        "phone": "0117 496 0715",
+        "address": "14 Colston Mews, Bristol BS1 5AU",
+        "time_zone": "Europe/London",
+        "sms_template": "reminder_standard"
+      }
+    }
+  },
+  "destination": "sms",
+  "sent_at": "2026-11-17T15:58:29Z",
+  "url": "https://api.relaywave.example/v3/messages"
+}

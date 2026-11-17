@@ -21,7 +21,7 @@ Records are read from `$CLINIC_DATA` (default `./data`). Exit codes: `0` ok, `1`
 | `clinicians.json` | treating staff |
 | `clinics.json` | sites, their time zone and the Relaywave template each site uses |
 | `appointments.json` | the appointment book; `starts_at` is UTC; status `booked`, `cancelled`, `attended`, `no_show` |
-| `sms_templates.json` | copy of the templates configured in our Relaywave account |
+| `sms_templates.json` | export of the templates in our Relaywave account, taken 2 Oct 2026. The front desk edits templates in the Relaywave dashboard, so the live set can differ from this copy |
 
 ## Outbound
 

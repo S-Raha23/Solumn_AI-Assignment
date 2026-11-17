@@ -1,0 +1,55 @@
+{
+  "body": {
+    "to": "+971501234567",
+    "template": "reminder_full",
+    "reference": "appt-A2",
+    "vars": {
+      "patient": {
+        "id": "gp-02",
+        "first_name": "Mina",
+        "last_name": "Farrokh",
+        "date_of_birth": "1981-02-11",
+        "phone": "+971501234567",
+        "email": "mina@mailbox.example",
+        "contact": {
+          "sms": true,
+          "email": true
+        },
+        "nhs_number": "910 111 2211",
+        "clinical_summary": "Chronic pelvic pain; endometriosis stage IV, fertility treatment ongoing.",
+        "referral": {
+          "source": "Gynaecology",
+          "reason": "Pelvic floor rehab"
+        }
+      },
+      "appointment": {
+        "id": "A2",
+        "patient_id": "gp-02",
+        "clinician_id": "cl-walsh",
+        "clinic_id": "dubai",
+        "kind": "initial assessment",
+        "starts_at": "2026-11-21T06:00:00Z",
+        "minutes": 45,
+        "status": "booked",
+        "starts_local": "Sat 21 Nov, 10:00"
+      },
+      "clinician": {
+        "id": "cl-walsh",
+        "display_name": "Niamh Walsh",
+        "role": "Hydrotherapist",
+        "email": "niamh.walsh@lindenfield.example"
+      },
+      "clinic": {
+        "id": "dubai",
+        "name": "Lindenfield Physio Dubai Marina",
+        "phone": "+971 4 496 0100",
+        "address": "Marina Plaza, Level 3, Dubai",
+        "time_zone": "Asia/Dubai",
+        "sms_template": "reminder_full"
+      }
+    }
+  },
+  "destination": "sms",
+  "sent_at": "2026-11-17T15:58:29Z",
+  "url": "https://api.relaywave.example/v3/messages"
+}

@@ -11,5 +11,8 @@ Job names are versions of the environment; README.md says what changed between t
 | rollout_v3 | leave-approval-announcer__WmxMNbJ | True | False | 1 | clean |
 | rollout_v3 | leave-approval-announcer__Ttxn8vb | True | False | 1 | clean |
 | rollout_v3 | leave-approval-announcer__rspxYiJ | True | False | 1 | clean |
+| rollout_v4 | leave-approval-announcer__SGvMrUc | True | False | 1 | clean |
+| rollout_v4 | leave-approval-announcer__ZoCnbaa | True | False | 1 | clean |
+| rollout_v4 | leave-approval-announcer__LvLVk4U | True | False | 1 | clean |
 
 No break recorded.

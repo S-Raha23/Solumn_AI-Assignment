@@ -4,15 +4,24 @@
     "template": "reminder_short",
     "vars": {
       "appointment": {
+        "id": "A7",
         "kind": "hydrotherapy",
+        "minutes": 40,
+        "starts_at": "2026-11-20T18:00:00Z",
         "starts_local": "Fri 20 Nov, 18:00"
       },
       "clinic": {
+        "address": "3 Oliver Plunkett St, Cork",
         "name": "Lindenfield Physio Cork",
         "phone": "+353 21 496 0388"
       },
       "clinician": {
-        "display_name": "Niamh Walsh"
+        "display_name": "Niamh Walsh",
+        "role": "Hydrotherapist"
+      },
+      "patient": {
+        "first_name": "Saoirse",
+        "last_name": "Lynch"
       }
     },
     "reference": "appt-A7"

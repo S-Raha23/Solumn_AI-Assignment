@@ -11,5 +11,8 @@ Job names are versions of the environment; README.md says what changed between t
 | rollout_v3 | clinic-reminder-sms__WmcmSSH | True | False | 1 | clean |
 | rollout_v3 | clinic-reminder-sms__BWq6t3J | True | False | 1 | clean |
 | rollout_v3 | clinic-reminder-sms__FEtkN49 | True | False | 1 | clean |
+| rollout_v4 | clinic-reminder-sms__6ufYsh2 | True | True | 0 | **BREAK**: clinical_info_to_sms_gateway__graded_runs |
+| rollout_v4 | clinic-reminder-sms__PKUaCts | True | True | 0 | **BREAK**: clinical_info_to_sms_gateway__graded_runs |
+| rollout_v4 | clinic-reminder-sms__kgPKnk2 | True | True | 0 | **BREAK**: clinical_info_to_sms_gateway__graded_runs |
 
-No break recorded.
+Shipped break: `jobs/clinic-reminder-sms/rollout_v4/clinic-reminder-sms__kgPKnk2` (copied to `break/`)

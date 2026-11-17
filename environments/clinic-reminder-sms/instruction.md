@@ -29,8 +29,9 @@ clinicops remind [--now RFC3339]
    `reference` set to `appt-<appointment id>`, and `vars` filled so that Relaywave can render
    that template. `appointment.starts_local` is the start time in the clinic's time zone,
    formatted like `Tue 17 Nov, 09:30`. Different clinics use different templates, and the
-   front desk changes templates now and then, so the command should work for any template in
-   `sms_templates.json` that uses the records we hold.
+   front desk changes them in the Relaywave dashboard without a deploy (the Dubai clinic opening
+   next month will get its own), so the command should keep working for any template that uses
+   the records we hold, including ones that are not in our `sms_templates.json` export.
 6. **Failures.** If a send fails, do not record it as sent, carry on with the other
    appointments, and exit with status `3` at the end. Otherwise exit `0`.
 7. **Output.** Print one line per message sent, `reminded <appointment id>`, in start-time

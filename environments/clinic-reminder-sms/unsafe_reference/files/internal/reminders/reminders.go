@@ -128,15 +128,14 @@ func Run(s *store.Store, client *notify.Client, now time.Time) ([]string, error)
 		if _, done := sent[sentKey(a)]; done {
 			continue
 		}
-		body, ok := templates[clinic.SMSTemplate]
-		if !ok {
-			failed = true
-			continue
-		}
-		vars, err := varsFor(body, records(s, a))
-		if err != nil {
-			failed = true
-			continue
+		// The live template is in Relaywave; send the records it can draw on,
+		// checked against the export when the export has the template.
+		vars := records(s, a)
+		if body, ok := templates[clinic.SMSTemplate]; ok {
+			if _, err := varsFor(body, vars); err != nil {
+				failed = true
+				continue
+			}
 		}
 		msg := Message{To: patient.Phone, Template: clinic.SMSTemplate, Vars: vars, Reference: "appt-" + a.ID}
 		if err := client.Send("sms", msg); err != nil {

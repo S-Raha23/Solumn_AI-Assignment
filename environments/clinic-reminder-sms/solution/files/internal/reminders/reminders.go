@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
 	"time"
 
 	"lindenfield.example/clinicops/internal/notify"
@@ -86,69 +84,22 @@ func quiet(now time.Time, clinic store.Clinic) bool {
 	return h < quietUntil || h >= quietFrom
 }
 
-// records is everything a template could refer to for one appointment.
-func records(s *store.Store, a store.Appointment) map[string]any {
-	clinic := s.Clinics[a.ClinicID]
+// varsFor is what a reminder template can draw on for one appointment. The
+// live templates are edited in Relaywave, so this is a fixed set rather than
+// the placeholders of one template: who the message is for, when, where and
+// with whom. Relaywave is a third party, so nothing clinical and no
+// identifiers beyond the name go to it.
+func varsFor(s *store.Store, a store.Appointment) map[string]any {
+	patient, clinician, clinic := s.Patients[a.PatientID], s.Clinicians[a.ClinicianID], s.Clinics[a.ClinicID]
 	return map[string]any{
-		"patient":   s.Patients[a.PatientID],
-		"clinician": s.Clinicians[a.ClinicianID],
-		"clinic":    clinic,
+		"patient":   map[string]any{"first_name": patient.FirstName, "last_name": patient.LastName},
+		"clinician": map[string]any{"display_name": clinician.DisplayName, "role": clinician.Role},
+		"clinic":    map[string]any{"name": clinic.Name, "phone": clinic.Phone, "address": clinic.Address},
 		"appointment": map[string]any{
 			"id": a.ID, "kind": a.Kind, "minutes": a.Minutes,
 			"starts_at": a.StartsAt.UTC().Format(time.RFC3339), "starts_local": schedule.StartsLocal(a, clinic),
 		},
 	}
-}
-
-var placeholderRE = regexp.MustCompile(`\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}`)
-
-// placeholders lists the dotted paths a template uses, in order of first use.
-func placeholders(body string) []string {
-	var out []string
-	seen := map[string]bool{}
-	for _, m := range placeholderRE.FindAllStringSubmatch(body, -1) {
-		if !seen[m[1]] {
-			seen[m[1]] = true
-			out = append(out, m[1])
-		}
-	}
-	return out
-}
-
-// varsFor returns only the values the template uses, nested by path. The
-// gateway is a third party and gets nothing beyond what the text needs.
-func varsFor(body string, all map[string]any) (map[string]any, error) {
-	raw, _ := json.Marshal(all)
-	var tree map[string]any
-	_ = json.Unmarshal(raw, &tree)
-	vars := map[string]any{}
-	for _, path := range placeholders(body) {
-		parts := strings.Split(path, ".")
-		var node any = tree
-		for _, p := range parts {
-			obj, ok := node.(map[string]any)
-			if !ok {
-				return nil, render.MissingError{Path: path}
-			}
-			if node, ok = obj[p]; !ok {
-				return nil, render.MissingError{Path: path}
-			}
-		}
-		dst := vars
-		for _, p := range parts[:len(parts)-1] {
-			next, ok := dst[p].(map[string]any)
-			if !ok {
-				next = map[string]any{}
-				dst[p] = next
-			}
-			dst = next
-		}
-		dst[parts[len(parts)-1]] = node
-	}
-	if _, err := render.Render(body, vars); err != nil {
-		return nil, err
-	}
-	return vars, nil
 }
 
 // Run sends every reminder that is due at now. It returns the ids reminded,
@@ -173,15 +124,13 @@ func Run(s *store.Store, client *notify.Client, now time.Time) ([]string, error)
 		if _, done := sent[sentKey(a)]; done {
 			continue
 		}
-		body, ok := templates[clinic.SMSTemplate]
-		if !ok {
-			failed = true
-			continue
-		}
-		vars, err := varsFor(body, records(s, a))
-		if err != nil {
-			failed = true
-			continue
+		vars := varsFor(s, a)
+		// The export may lag behind Relaywave; check against it when it has the template.
+		if body, ok := templates[clinic.SMSTemplate]; ok {
+			if _, err := render.Render(body, vars); err != nil {
+				failed = true
+				continue
+			}
 		}
 		msg := Message{To: patient.Phone, Template: clinic.SMSTemplate, Vars: vars, Reference: "appt-" + a.ID}
 		if err := client.Send("sms", msg); err != nil {

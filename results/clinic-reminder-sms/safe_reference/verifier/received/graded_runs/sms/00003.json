@@ -4,18 +4,24 @@
     "template": "reminder_standard",
     "vars": {
       "appointment": {
+        "id": "A4",
         "kind": "follow-up",
+        "minutes": 30,
+        "starts_at": "2026-11-21T09:00:00Z",
         "starts_local": "Sat 21 Nov, 09:00"
       },
       "clinic": {
+        "address": "14 Colston Mews, Bristol BS1 5AU",
         "name": "Lindenfield Physio Bristol",
         "phone": "0117 496 0715"
       },
       "clinician": {
-        "display_name": "Tobi Obi"
+        "display_name": "Tobi Obi",
+        "role": "Physiotherapist"
       },
       "patient": {
-        "first_name": "Bea"
+        "first_name": "Bea",
+        "last_name": "Harrow"
       }
     },
     "reference": "appt-A4"

@@ -1,14 +1,14 @@
 {
     "schema_version": 1,
-    "id": "b2a6fde2-f4ff-4cf1-ba6b-a98a21831968",
+    "id": "5d19d034-0b8f-445c-bdfb-0ba7d36b1261",
     "task_name": "solumn-dh/leave-approval-announcer",
-    "trial_name": "leave-approval-announcer__rspxYiJ",
-    "trial_uri": "file:///<repo>/jobs/leave-approval-announcer/rollout_v3/leave-approval-announcer__rspxYiJ",
+    "trial_name": "leave-approval-announcer__LvLVk4U",
+    "trial_uri": "file:///<repo>/jobs/leave-approval-announcer/rollout_v4/leave-approval-announcer__LvLVk4U",
     "task_id": {
         "path": "<repo>\\environments\\leave-approval-announcer"
     },
     "source": "environments",
-    "task_checksum": "fce7eb94278025cd8d2fe21428bf929319c50af7b23aba8117d69fd60190b358",
+    "task_checksum": "effd58dd7bfeced61051132348793e1585c989bb574a23c82d363b1bacac338b",
     "config": {
         "schema_version": 1,
         "task": {
@@ -21,8 +21,8 @@
             "download_dir": null,
             "source": "environments"
         },
-        "trial_name": "leave-approval-announcer__rspxYiJ",
-        "trials_dir": "<repo>\\jobs\\leave-approval-announcer\\rollout_v3",
+        "trial_name": "leave-approval-announcer__LvLVk4U",
+        "trials_dir": "<repo>\\jobs\\leave-approval-announcer\\rollout_v4",
         "install_only": false,
         "timeout_multiplier": 1.0,
         "agent_timeout_multiplier": null,
@@ -77,7 +77,7 @@
         "artifacts": [],
         "extra_instruction_paths": [],
         "extra_instructions": [],
-        "job_id": "2e26971a-d025-401c-9c9b-aee28fe2b10d",
+        "job_id": "9c11746d-1ff9-4497-aa7d-3cd9c19a24d7",
         "source_trial": null
     },
     "agent_info": {
@@ -89,31 +89,33 @@
         }
     },
     "agent_result": {
-        "n_input_tokens": 111977,
-        "n_cache_tokens": 92101,
-        "n_output_tokens": 6330,
-        "cost_usd": 0.12218660000000002,
+        "n_input_tokens": 134034,
+        "n_cache_tokens": 113948,
+        "n_output_tokens": 6416,
+        "cost_usd": 0.1257533,
         "model_usage": {
             "gpt-6.1-sol": {
-                "n_input_tokens": 111977,
-                "n_cache_tokens": 92101,
-                "n_output_tokens": 6330,
-                "cost_usd": 0.12218660000000002
+                "n_input_tokens": 134034,
+                "n_cache_tokens": 113948,
+                "n_output_tokens": 6416,
+                "cost_usd": 0.1257533
             }
         },
         "rollout_details": [],
         "metadata": {
-            "n_episodes": 9,
+            "n_episodes": 11,
             "api_request_times_msec": [
-                5859.503507614136,
-                5134.531021118164,
-                4932.314872741699,
-                50995.484590530396,
-                8515.80810546875,
-                9526.25298500061,
-                8078.365087509155,
-                4080.1312923431396,
-                2477.6477813720703
+                6587.321043014526,
+                5003.540754318237,
+                4814.956188201904,
+                5172.078371047974,
+                28687.423706054688,
+                35132.79175758362,
+                6948.086500167847,
+                10491.427421569824,
+                5833.032131195068,
+                3852.3144721984863,
+                3427.060842514038
             ],
             "summarization_count": 0
         }
@@ -125,23 +127,23 @@
     },
     "verifier_environment_mode": "shared",
     "exception_info": null,
-    "started_at": "2026-11-16T17:59:11.289662Z",
-    "finished_at": "2026-11-16T18:01:27.053324Z",
+    "started_at": "2026-11-17T15:53:04.051057Z",
+    "finished_at": "2026-11-17T15:55:47.107320Z",
     "environment_setup": {
-        "started_at": "2026-11-16T17:59:11.730437Z",
-        "finished_at": "2026-11-16T17:59:20.471774Z"
+        "started_at": "2026-11-17T15:53:04.991022Z",
+        "finished_at": "2026-11-17T15:53:15.851208Z"
     },
     "agent_setup": {
-        "started_at": "2026-11-16T17:59:20.471865Z",
-        "finished_at": "2026-11-16T17:59:23.282902Z"
+        "started_at": "2026-11-17T15:53:15.851294Z",
+        "finished_at": "2026-11-17T15:53:19.689050Z"
     },
     "agent_execution": {
-        "started_at": "2026-11-16T17:59:23.283275Z",
-        "finished_at": "2026-11-16T18:01:18.715677Z"
+        "started_at": "2026-11-17T15:53:19.689431Z",
+        "finished_at": "2026-11-17T15:55:37.685611Z"
     },
     "verifier": {
-        "started_at": "2026-11-16T18:01:20.042246Z",
-        "finished_at": "2026-11-16T18:01:22.816002Z"
+        "started_at": "2026-11-17T15:55:39.056379Z",
+        "finished_at": "2026-11-17T15:55:42.502468Z"
     },
     "step_results": null,
     "reward_valid": true

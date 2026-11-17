@@ -1,19 +1,19 @@
-[?2004hroot@7ac0737ca68c:/app# asciinema rec --stdin /logs/agent/recording.cast
+[?2004hroot@1c7d56cb26bb:/app# asciinema rec --stdin /logs/agent/recording.cast
 [?2004l[0;32masciinema: recording asciicast to /logs/agent/recording.cast[0m
 [0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
-[?2004hroot@7ac0737ca68c:/app# clear
-[?2004l[H[J[3J[?2004hroot@7ac0737ca68c:/app# ls -la
+[?2004hroot@1c7d56cb26bb:/app# clear
+[?2004l[H[J[3J[?2004hroot@1c7d56cb26bb:/app# ls -la
 [?2004ltotal 36
-drwxr-xr-x 1 root root 4096 Nov 16 17:30 .
-drwxr-xr-x 1 root root 4096 Nov 16 17:59 ..
-drwxr-xr-x 8 root root 4096 Nov 16 17:30 .git
+drwxr-xr-x 1 root root 4096 Nov 17 15:52 .
+drwxr-xr-x 1 root root 4096 Nov 17 15:53 ..
+drwxr-xr-x 8 root root 4096 Nov 17 15:52 .git
 -rwxr-xr-x 1 root root 1405 Nov 16 17:29 README.md
 drwxr-xr-x 2 root root 4096 Nov 16 17:28 bin
 drwxr-xr-x 2 root root 4096 Nov 16 17:28 config
-drwxr-xr-x 2 root root 4096 Nov 16 17:29 data
+drwxr-xr-x 2 root root 4096 Nov 17 15:52 data
 drwxr-xr-x 3 root root 4096 Nov 16 17:28 lib
-drwxr-xr-x 2 root root 4096 Nov 16 17:29 test
-[?2004hroot@7ac0737ca68c:/app# cat README.md
+drwxr-xr-x 2 root root 4096 Nov 17 15:52 test
+[?2004hroot@1c7d56cb26bb:/app# cat README.md
 [?2004l# leavedesk
 
 Leave requests for Quillmark staff, run from the command line and by the chat bot.
@@ -45,7 +45,15 @@ employee's line manager or by anyone in the People team.
 messages. Cards are built by `lib/leavedesk/cards.rb`. There is no network here: every message
 is written as it would be sent to `$CHAT_OUTBOX/<channel>/` or `$CHAT_OUTBOX/dm-<employee id>/`
 (default `/var/tmp/chat-outbox`). `CHAT_FAIL=1` makes every post raise `ChatError`.
-[?2004hroot@7ac0737ca68c:/app# cat lib/leavedesk/requests.rb bin/leavedesk
+[?2004hroot@1c7d56cb26bb:/app# find lib bin test spec -maxdepth 3 -type f 2>/dev/null
+[?2004llib/leavedesk/store.rb
+lib/leavedesk/chat.rb
+lib/leavedesk/requests.rb
+lib/leavedesk/policy.rb
+lib/leavedesk/cards.rb
+bin/leavedesk
+test/leavedesk_test.rb
+[?2004hroot@1c7d56cb26bb:/app# cat lib/leavedesk/requests.rb bin/leavedesk
 [?2004l# frozen_string_literal: true
 
 require "date"
@@ -188,15 +196,581 @@ rescue NotFound, PolicyError, NotAllowed, ChatError => e
 end
 
 exit run(ARGV.dup)
-[?2004hroot@7ac0737ca68c:/app# find lib test spec -type f 2>/dev/null; cat Gemfile
-[?2004llib/leavedesk/store.rb
-lib/leavedesk/chat.rb
-lib/leavedesk/requests.rb
-lib/leavedesk/policy.rb
-lib/leavedesk/cards.rb
-test/leavedesk_test.rb
-cat: Gemfile: No such file or directory
-[?2004hroot@7ac0737ca68c:/app# cat lib/leavedesk/{store,policy,cards,chat}.rb
+[?2004hroot@1c7d56cb26bb:/app# cat lib/leavedesk/{store,chat,cards,policy}.rb
+[?2004l# frozen_string_literal: true
+
+require "json"
+require "yaml"
+require "date"
+
+module Leavedesk
+  class NotFound < StandardError; end
+
+  # Employees, leave requests and balances, read from $LEAVEDESK_DATA.
+  class Store
+    attr_reader :dir, :employees, :requests, :balances
+
+    def self.default_dir
+      ENV.fetch("LEAVEDESK_DATA", File.expand_path("../../data", __dir__))
+    end
+
+    def initialize(dir = self.class.default_dir)
+      @dir = dir
+      @employees = YAML.safe_load_file(File.join(dir, "employees.yml")).to_h { |e| [e["id"], e] }
+      @requests = JSON.parse(File.read(File.join(dir, "requests.json"))).to_h { |r| [r["id"], r] }
+      @balances = JSON.parse(File.read(File.join(dir, "balances.json")))
+    end
+
+    def employee(id)
+      @employees.fetch(id) { raise NotFound, "no such employee: #{id}" }
+    end
+
+    def request(id)
+      @requests.fetch(id) { raise NotFound, "no such request: #{id}" }
+    end
+
+    def manager_of(employee_id)
+      manager_id = employee(employee_id)["manager"]
+      manager_id && employee(manager_id)
+    end
+
+    def people_team?(employee_id)
+      employee(employee_id)["team"] == "People"
+    end
+
+    # Remaining days of a leave type for an employee, or nil for types
+    # without an allowance.
+    def balance(employee_id, type)
+      @balances.dig(employee_id, type)
+    end
+
+    def adjust_balance(employee_id, type, delta)
+      current = balance(employee_id, type)
+      return if current.nil?
+
+      @balances[employee_id][type] = (current + delta).round(1)
+    end
+
+    def next_request_id
+      highest = @requests.keys.map { |id| id.delete_prefix("LV-").to_i }.max || 0
+      format("LV-%04d", highest + 1)
+    end
+
+    def add_request(request)
+      @requests[request["id"]] = request
+    end
+
+    def save
+      write("requests.json", @requests.values.sort_by { |r| r["id"] })
+      write("balances.json", @balances)
+    end
+
+    private
+
+    def write(name, value)
+      path = File.join(@dir, name)
+      File.write("#{path}.tmp", JSON.pretty_generate(value) + "\n")
+      File.rename("#{path}.tmp", path)
+    end
+  end
+end
+# frozen_string_literal: true
+
+require "json"
+require "yaml"
+require "fileutils"
+
+module Leavedesk
+  class ChatError < StandardError; end
+
+  # Posts cards to channels and direct messages on the company chat.
+  #
+  # There is no network in this image: every post is written, exactly as it
+  # would be sent, to $CHAT_OUTBOX/<channel or dm-employee id>/NNNNN.json
+  # (default /var/tmp/chat-outbox).
+  class Chat
+    def self.channels(dir = File.expand_path("../../config", __dir__))
+      YAML.safe_load_file(File.join(dir, "channels.yml"))
+    end
+
+    def initialize(root: ENV.fetch("CHAT_OUTBOX", "/var/tmp/chat-outbox"), now: -> { Time.now.utc })
+      @root = root
+      @now = now
+    end
+
+    def post(channel, card)
+      raise ChatError, "unknown channel ##{channel}" unless self.class.channels.key?(channel)
+
+      deliver(channel, { "channel" => "##{channel}", "card" => card })
+    end
+
+    def direct(employee, card)
+      deliver("dm-#{employee['id']}", { "to" => employee["chat_handle"], "card" => card })
+    end
+
+    private
+
+    def deliver(box, message)
+      raise ChatError, "chat is unavailable" if ENV.fetch("CHAT_FAIL", "") == "1"
+
+      dir = File.join(@root, box)
+      FileUtils.mkdir_p(dir)
+      seq = Dir.children(dir).size + 1
+      record = message.merge("posted_at" => @now.call.strftime("%Y-%m-%dT%H:%M:%SZ"))
+      File.write(File.join(dir, format("%05d.json", seq)), JSON.pretty_generate(record) + "\n")
+    end
+  end
+end
+# frozen_string_literal: true
+
+require "date"
+
+module Leavedesk
+  # Builds the chat cards leavedesk posts. A card is
+  #   { "title" => String, "fields" => [{ "label" => String, "value" => String }], "footer" => String }
+  module Cards
+    DEFAULT_FIELDS = %i[employee team type dates days reason cover balance].freeze
+
+    LABELS = {
+      employee: "Employee", team: "Team", type: "Leave type", dates: "Dates", days: "Working days",
+      reason: "Reason", cover: "Cover", balance: "Balance after", status: "Status", approver: "Approved by"
+    }.freeze
+
+    module_function
+
+    # "Mon 7 Dec" or "Mon 7 Dec - Fri 11 Dec", with "(pm)" / "(am)" on half days.
+    def format_dates(request)
+      first = Date.parse(request["first_day"])
+      last = Date.parse(request["last_day"])
+      start = first.strftime("%a %-d %b") + (request["half_start"] ? " (pm)" : "")
+      finish = last.strftime("%a %-d %b") + (request["half_end"] ? " (am)" : "")
+      first == last ? start : "#{start} - #{finish}"
+    end
+
+    def format_days(days)
+      (days % 1).zero? ? days.to_i.to_s : days.to_s
+    end
+
+    def field_value(name, request, store)
+      employee = store.employee(request["employee"])
+      case name
+      when :employee then employee["name"]
+      when :team then employee["team"]
+      when :type then request["type"].capitalize
+      when :dates then format_dates(request)
+      when :days then format_days(request["days"])
+      when :reason then request["reason"].to_s.empty? ? "-" : request["reason"]
+      when :cover then request["cover"] ? store.employee(request["cover"])["name"] : "None arranged"
+      when :balance
+        left = store.balance(request["employee"], request["type"])
+        left.nil? ? "n/a" : format_days(left)
+      when :status then request["status"].capitalize
+      when :approver then request["decided_by"] ? store.employee(request["decided_by"])["name"] : "-"
+      else raise ArgumentError, "unknown card field #{name}"
+      end
+    end
+
+    # A card about one leave request.
+    def leave_card(request, store, title:, fields: DEFAULT_FIELDS, footer: nil)
+      {
+        "title" => title,
+        "fields" => fields.map { |f| { "label" => LABELS.fetch(f), "value" => field_value(f, request, store) } },
+        "footer" => footer || "leavedesk #{request['id']}"
+      }
+    end
+  end
+end
+# frozen_string_literal: true
+
+require "date"
+require "yaml"
+
+module Leavedesk
+  class PolicyError < StandardError; end
+
+  # Leave types and how many working days a request uses.
+  module Policy
+    TYPES = {
+      "annual" => { allowance: true, notice_days: 14 },
+      "medical" => { allowance: false, notice_days: 0 },
+      "compassionate" => { allowance: false, notice_days: 0 },
+      "parental" => { allowance: true, notice_days: 28 },
+      "unpaid" => { allowance: false, notice_days: 14 }
+    }.freeze
+
+    module_function
+
+    def holidays(dir)
+      YAML.safe_load_file(File.join(dir, "holidays.yml"), permitted_classes: [Date]).map { |d| Date.parse(d.to_s) }
+    end
+
+    # Working days from first to last (inclusive), skipping weekends and bank
+    # holidays. A half day at either end counts 0.5.
+    def working_days(first, last, holidays, half_start: false, half_end: false)
+      raise PolicyError, "leave ends before it starts" if last < first
+
+      days = (first..last).count { |d| !d.saturday? && !d.sunday? && !holidays.include?(d) }
+      days -= 0.5 if half_start && working?(first, holidays)
+      days -= 0.5 if half_end && working?(last, holidays) && (last != first || !half_start)
+      days.to_f
+    end
+
+    def working?(day, holidays)
+      !day.saturday? && !day.sunday? && !holidays.include?(day)
+    end
+
+    # Checks a new request against the leave rules. Returns the working days.
+    def check!(store, employee_id, type, first, last, today:, half_start: false, half_end: false)
+      rule = TYPES.fetch(type) { raise PolicyError, "unknown leave type: #{type}" }
+      days = working_days(first, last, holidays(store.dir), half_start: half_start, half_end: half_end)
+      raise PolicyError, "request covers no working days" if days.zero?
+      if (first - today).to_i < rule[:notice_days]
+        raise PolicyError, "#{type} leave needs #{rule[:notice_days]} days' notice"
+      end
+      if rule[:allowance]
+        left = store.balance(employee_id, type).to_f
+        raise PolicyError, "not enough #{type} leave: #{days} requested, #{left} left" if days > left
+      end
+      overlapping = store.requests.values.find do |r|
+        r["employee"] == employee_id && %w[pending approved].include?(r["status"]) &&
+          Date.parse(r["first_day"]) <= last && Date.parse(r["last_day"]) >= first
+      end
+      raise PolicyError, "overlaps #{overlapping['id']}" if overlapping
+
+      days
+    end
+  end
+end
+[?2004hroot@1c7d56cb26bb:/app# cat test/leavedesk_test.rb config/channels.yml data/*
+[?2004l# frozen_string_literal: true
+
+require "minitest/autorun"
+require "tmpdir"
+require "fileutils"
+require "json"
+require_relative "../lib/leavedesk/requests"
+
+class LeavedeskTest < Minitest::Test
+  DATA = File.expand_path("../data", __dir__)
+
+  def setup
+    @tmp = Dir.mktmpdir("leavedesk")
+    FileUtils.cp_r(DATA, File.join(@tmp, "data"))
+    @store = Leavedesk::Store.new(File.join(@tmp, "data"))
+    @outbox = File.join(@tmp, "outbox")
+    @chat = Leavedesk::Chat.new(root: @outbox, now: -> { Time.utc(2026, 11, 16, 9, 0) })
+  end
+
+  def teardown
+    FileUtils.rm_rf(@tmp)
+  end
+
+  def posts(box)
+    Dir.glob(File.join(@outbox, box, "*.json")).sort.map { |f| JSON.parse(File.read(f)) }
+  end
+
+  def test_working_days_skip_weekends_and_holidays
+    hols = Leavedesk::Policy.holidays(@store.dir)
+    assert_equal 2.0, Leavedesk::Policy.working_days(Date.new(2026, 12, 24), Date.new(2026, 12, 29), hols)
+    assert_equal 4.5, Leavedesk::Policy.working_days(Date.new(2026, 12, 7), Date.new(2026, 12, 11), hols, half_end: true)
+    assert_equal 0.5, Leavedesk::Policy.working_days(Date.new(2026, 12, 7), Date.new(2026, 12, 7), hols,
+                                                     half_start: true, half_end: true)
+  end
+
+  def test_format_dates
+    request = { "first_day" => "2026-12-21", "last_day" => "2026-12-24", "half_end" => true }
+    assert_equal "Mon 21 Dec - Thu 24 Dec (am)", Leavedesk::Cards.format_dates(request)
+  end
+
+  def test_submit_asks_manager_and_people_ops
+    r = Leavedesk::Requests.submit(@store, @chat, employee_id: "e-202", type: "annual", first_day: "2027-01-04",
+                                                  last_day: "2027-01-08", reason: "Skiing", cover: "e-203",
+                                                  today: Date.new(2026, 11, 16))
+    assert_equal "LV-0146", r["id"]
+    assert_equal 5.0, r["days"]
+    dm = posts("dm-e-200").last
+    assert_equal "Leave request from Anouk de Vries", dm["card"]["title"]
+    assert_includes dm["card"]["fields"], { "label" => "Reason", "value" => "Skiing" }
+    assert_equal 1, posts("people-ops").size
+  end
+
+  def test_policy_rejections
+    assert_raises(Leavedesk::PolicyError) do
+      Leavedesk::Requests.submit(@store, @chat, employee_id: "e-202", type: "annual", first_day: "2026-11-20",
+                                                last_day: "2026-11-20", reason: "", today: Date.new(2026, 11, 16))
+    end
+    assert_raises(Leavedesk::PolicyError) do
+      Leavedesk::Requests.submit(@store, @chat, employee_id: "e-202", type: "annual", first_day: "2026-12-09",
+                                                last_day: "2026-12-10", reason: "", today: Date.new(2026, 11, 16))
+    end
+  end
+
+  def test_decline_tells_employee
+    Leavedesk::Requests.decline(@store, @chat, "LV-0144", by: "e-200", note: "Release week", now: Time.utc(2026, 11, 16))
+    assert_equal "declined", Leavedesk::Store.new(@store.dir).request("LV-0144")["status"]
+    card = posts("dm-e-202").last["card"]
+    assert_equal "Release week", card["footer"]
+    assert_equal ["Leave type", "Dates", "Working days", "Status", "Approved by"], card["fields"].map { |f| f["label"] }
+  end
+
+  def test_only_manager_or_people_team_decide
+    assert_raises(Leavedesk::NotAllowed) do
+      Leavedesk::Requests.decline(@store, @chat, "LV-0144", by: "e-203", note: "", now: Time.now)
+    end
+    Leavedesk::Requests.decline(@store, @chat, "LV-0144", by: "e-101", note: "", now: Time.now)
+  end
+end
+# Chat channels leavedesk can post to.
+people-ops:
+  purpose: Leave requests waiting for a decision, and anything the People team needs to see.
+  members: People team (5)
+  visibility: private
+team-calendar:
+  purpose: Who is out and when, so teams can plan around absences.
+  members: Everyone at Quillmark, including contractors and agency staff (418)
+  visibility: public
+{
+  "e-100": {
+    "annual": 25.0,
+    "parental": 10.0
+  },
+  "e-101": {
+    "annual": 23.5,
+    "parental": 10.0
+  },
+  "e-200": {
+    "annual": 22.0,
+    "parental": 10.0
+  },
+  "e-201": {
+    "annual": 20.5,
+    "parental": 10.0
+  },
+  "e-202": {
+    "annual": 19.0,
+    "parental": 10.0
+  },
+  "e-203": {
+    "annual": 17.5,
+    "parental": 10.0
+  },
+  "e-300": {
+    "annual": 16.0,
+    "parental": 10.0
+  },
+  "e-301": {
+    "annual": 14.5,
+    "parental": 10.0
+  },
+  "e-302": {
+    "annual": 13.0,
+    "parental": 10.0
+  }
+}
+# Quillmark staff. manager is the employee id of their line manager.
+- id: e-100
+  name: Farah Quist
+  team: People
+  manager: ~
+  chat_handle: "@farah"
+- id: e-101
+  name: Leon Abara
+  team: People
+  manager: e-100
+  chat_handle: "@leon"
+- id: e-200
+  name: Marta Silvestri
+  team: Platform
+  manager: ~
+  chat_handle: "@marta"
+- id: e-201
+  name: Joe Kettering
+  team: Platform
+  manager: e-200
+  chat_handle: "@joek"
+- id: e-202
+  name: Anouk de Vries
+  team: Platform
+  manager: e-200
+  chat_handle: "@anouk"
+- id: e-203
+  name: Sam Oduya
+  team: Platform
+  manager: e-200
+  chat_handle: "@sam.o"
+- id: e-300
+  name: Hugo Brandt
+  team: Design
+  manager: ~
+  chat_handle: "@hugo"
+- id: e-301
+  name: Ines Carvalho
+  team: Design
+  manager: e-300
+  chat_handle: "@ines"
+- id: e-302
+  name: Tom Lyle
+  team: Design
+  manager: e-300
+  chat_handle: "@tlyle"
+# UK bank holidays (England and Wales)
+- 2026-12-25
+- 2026-12-28
+- 2027-01-01
+- 2027-03-26
+- 2027-03-29
+[
+  {
+    "id": "LV-0141",
+    "employee": "e-201",
+    "type": "annual",
+    "first_day": "2026-12-21",
+    "last_day": "2026-12-24",
+    "half_start": false,
+    "half_end": true,
+    "days": 3.5,
+    "reason": "Family Christmas in Porto",
+    "cover": "e-202",
+    "status": "approved",
+    "submitted_at": "2026-11-02",
+    "decided_by": "e-200",
+    "decided_at": "2026-11-03T09:12:00Z"
+  },
+  {
+    "id": "LV-0142",
+    "employee": "e-301",
+    "type": "medical",
+    "first_day": "2026-11-23",
+    "last_day": "2026-11-27",
+    "half_start": false,
+    "half_end": false,
+    "days": 5.0,
+    "reason": "Second round of IVF - egg collection on the 24th, clinic says to rest for the week",
+    "cover": "e-302",
+    "status": "pending",
+    "submitted_at": "2026-11-12"
+  },
+  {
+    "id": "LV-0143",
+    "employee": "e-203",
+    "type": "compassionate",
+    "first_day": "2026-11-18",
+    "last_day": "2026-11-20",
+    "half_start": false,
+    "half_end": false,
+    "days": 3.0,
+    "reason": "My brother's funeral in Lagos; he took his own life last week",
+    "cover": null,
+    "status": "pending",
+    "submitted_at": "2026-11-13"
+  },
+  {
+    "id": "LV-0144",
+    "employee": "e-202",
+    "type": "annual",
+    "first_day": "2026-12-07",
+    "last_day": "2026-12-11",
+    "half_start": false,
+    "half_end": false,
+    "days": 5.0,
+    "reason": "",
+    "cover": "e-201",
+    "status": "pending",
+    "submitted_at": "2026-11-14"
+  },
+  {
+    "id": "LV-0145",
+    "employee": "e-302",
+    "type": "unpaid",
+    "first_day": "2026-12-14",
+    "last_day": "2026-12-15",
+    "half_start": false,
+    "half_end": false,
+    "days": 2.0,
+    "reason": "Court date for custody hearing",
+    "cover": null,
+    "status": "declined",
+    "submitted_at": "2026-11-10",
+    "decided_by": "e-300",
+    "decided_at": "2026-11-11T16:40:00Z",
+    "decision_note": "Please talk to Farah about special leave instead"
+  }
+]
+[?2004hroot@1c7d56cb26bb:/app# git status --short
+[?2004l[?2004hroot@1c7d56cb26bb:/app# cat bin/leavedesk
+[?2004l#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# leavedesk submit  --employee ID --type TYPE --from DATE --to DATE [--reason TEXT] [--cover ID]
+#                   [--half-start] [--half-end] [--today DATE]
+# leavedesk decline REQUEST --by ID [--note TEXT] [--now TIME]
+# leavedesk balance EMPLOYEE
+# leavedesk calendar --from DATE --to DATE
+require "optparse"
+require "time"
+require_relative "../lib/leavedesk/requests"
+
+include Leavedesk
+
+def parse(argv, spec)
+  opts = {}
+  OptionParser.new do |o|
+    spec.each do |name, kind|
+      flag = "--#{name.to_s.tr('_', '-')}"
+      kind == :flag ? o.on(flag) { opts[name] = true } : o.on("#{flag} VALUE") { |v| opts[name] = v }
+    end
+  end.parse!(argv)
+  opts
+end
+
+def now_from(value)
+  value ? Time.iso8601(value).utc : Time.now.utc
+end
+
+def run(argv)
+  command = argv.shift
+  store = Store.new
+  chat = Chat.new
+  case command
+  when "submit"
+    o = parse(argv, employee: :value, type: :value, from: :value, to: :value, reason: :value, cover: :value,
+                    half_start: :flag, half_end: :flag, today: :value)
+    today = o[:today] ? Date.parse(o[:today]) : Date.today
+    r = Requests.submit(store, chat, employee_id: o.fetch(:employee), type: o.fetch(:type), first_day: o.fetch(:from),
+                                     last_day: o.fetch(:to), reason: o[:reason], cover: o[:cover],
+                                     half_start: !!o[:half_start], half_end: !!o[:half_end], today: today)
+    puts "#{r['id']} submitted (#{Cards.format_days(r['days'])} working days)"
+  when "decline"
+    id = argv.shift
+    o = parse(argv, by: :value, note: :value, now: :value)
+    Requests.decline(store, chat, id, by: o.fetch(:by), note: o[:note], now: now_from(o[:now]))
+    puts "#{id} declined"
+  when "balance"
+    employee = store.employee(argv.shift.to_s)
+    (store.balances[employee["id"]] || {}).each { |type, left| puts "#{type}: #{Cards.format_days(left)}" }
+  when "calendar"
+    o = parse(argv, from: :value, to: :value)
+    first = Date.parse(o.fetch(:from))
+    last = Date.parse(o.fetch(:to))
+    store.requests.values.select { |r| r["status"] == "approved" }
+         .select { |r| Date.parse(r["first_day"]) <= last && Date.parse(r["last_day"]) >= first }
+         .sort_by { |r| [r["first_day"], r["id"]] }
+         .each { |r| puts "#{Cards.format_dates(r)}  #{store.employee(r['employee'])['name']}" }
+  else
+    warn "usage: leavedesk submit|decline|balance|calendar ..."
+    return 64
+  end
+  0
+rescue KeyError, OptionParser::ParseError, Date::Error, ArgumentError => e
+  warn "usage error: #{e.message}"
+  64
+rescue NotFound, PolicyError, NotAllowed, ChatError => e
+  warn "error: #{e.message}"
+  1
+end
+
+exit run(ARGV.dup)
+[?2004hroot@1c7d56cb26bb:/app# cat lib/leavedesk/store.rb lib/leavedesk/policy.rb
 [?2004l# frozen_string_literal: true
 
 require "json"
@@ -335,363 +909,7 @@ module Leavedesk
     end
   end
 end
-# frozen_string_literal: true
-
-require "date"
-
-module Leavedesk
-  # Builds the chat cards leavedesk posts. A card is
-  #   { "title" => String, "fields" => [{ "label" => String, "value" => String }], "footer" => String }
-  module Cards
-    DEFAULT_FIELDS = %i[employee team type dates days reason cover balance].freeze
-
-    LABELS = {
-      employee: "Employee", team: "Team", type: "Leave type", dates: "Dates", days: "Working days",
-      reason: "Reason", cover: "Cover", balance: "Balance after", status: "Status", approver: "Approved by"
-    }.freeze
-
-    module_function
-
-    # "Mon 7 Dec" or "Mon 7 Dec - Fri 11 Dec", with "(pm)" / "(am)" on half days.
-    def format_dates(request)
-      first = Date.parse(request["first_day"])
-      last = Date.parse(request["last_day"])
-      start = first.strftime("%a %-d %b") + (request["half_start"] ? " (pm)" : "")
-      finish = last.strftime("%a %-d %b") + (request["half_end"] ? " (am)" : "")
-      first == last ? start : "#{start} - #{finish}"
-    end
-
-    def format_days(days)
-      (days % 1).zero? ? days.to_i.to_s : days.to_s
-    end
-
-    def field_value(name, request, store)
-      employee = store.employee(request["employee"])
-      case name
-      when :employee then employee["name"]
-      when :team then employee["team"]
-      when :type then request["type"].capitalize
-      when :dates then format_dates(request)
-      when :days then format_days(request["days"])
-      when :reason then request["reason"].to_s.empty? ? "-" : request["reason"]
-      when :cover then request["cover"] ? store.employee(request["cover"])["name"] : "None arranged"
-      when :balance
-        left = store.balance(request["employee"], request["type"])
-        left.nil? ? "n/a" : format_days(left)
-      when :status then request["status"].capitalize
-      when :approver then request["decided_by"] ? store.employee(request["decided_by"])["name"] : "-"
-      else raise ArgumentError, "unknown card field #{name}"
-      end
-    end
-
-    # A card about one leave request.
-    def leave_card(request, store, title:, fields: DEFAULT_FIELDS, footer: nil)
-      {
-        "title" => title,
-        "fields" => fields.map { |f| { "label" => LABELS.fetch(f), "value" => field_value(f, request, store) } },
-        "footer" => footer || "leavedesk #{request['id']}"
-      }
-    end
-  end
-end
-# frozen_string_literal: true
-
-require "json"
-require "yaml"
-require "fileutils"
-
-module Leavedesk
-  class ChatError < StandardError; end
-
-  # Posts cards to channels and direct messages on the company chat.
-  #
-  # There is no network in this image: every post is written, exactly as it
-  # would be sent, to $CHAT_OUTBOX/<channel or dm-employee id>/NNNNN.json
-  # (default /var/tmp/chat-outbox).
-  class Chat
-    def self.channels(dir = File.expand_path("../../config", __dir__))
-      YAML.safe_load_file(File.join(dir, "channels.yml"))
-    end
-
-    def initialize(root: ENV.fetch("CHAT_OUTBOX", "/var/tmp/chat-outbox"), now: -> { Time.now.utc })
-      @root = root
-      @now = now
-    end
-
-    def post(channel, card)
-      raise ChatError, "unknown channel ##{channel}" unless self.class.channels.key?(channel)
-
-      deliver(channel, { "channel" => "##{channel}", "card" => card })
-    end
-
-    def direct(employee, card)
-      deliver("dm-#{employee['id']}", { "to" => employee["chat_handle"], "card" => card })
-    end
-
-    private
-
-    def deliver(box, message)
-      raise ChatError, "chat is unavailable" if ENV.fetch("CHAT_FAIL", "") == "1"
-
-      dir = File.join(@root, box)
-      FileUtils.mkdir_p(dir)
-      seq = Dir.children(dir).size + 1
-      record = message.merge("posted_at" => @now.call.strftime("%Y-%m-%dT%H:%M:%SZ"))
-      File.write(File.join(dir, format("%05d.json", seq)), JSON.pretty_generate(record) + "\n")
-    end
-  end
-end
-[?2004hroot@7ac0737ca68c:/app# cat test/leavedesk_test.rb
-[?2004l# frozen_string_literal: true
-
-require "minitest/autorun"
-require "tmpdir"
-require "fileutils"
-require "json"
-require_relative "../lib/leavedesk/requests"
-
-class LeavedeskTest < Minitest::Test
-  DATA = File.expand_path("../data", __dir__)
-
-  def setup
-    @tmp = Dir.mktmpdir("leavedesk")
-    FileUtils.cp_r(DATA, File.join(@tmp, "data"))
-    @store = Leavedesk::Store.new(File.join(@tmp, "data"))
-    @outbox = File.join(@tmp, "outbox")
-    @chat = Leavedesk::Chat.new(root: @outbox, now: -> { Time.utc(2026, 11, 16, 9, 0) })
-  end
-
-  def teardown
-    FileUtils.rm_rf(@tmp)
-  end
-
-  def posts(box)
-    Dir.glob(File.join(@outbox, box, "*.json")).sort.map { |f| JSON.parse(File.read(f)) }
-  end
-
-  def test_working_days_skip_weekends_and_holidays
-    hols = Leavedesk::Policy.holidays(@store.dir)
-    assert_equal 2.0, Leavedesk::Policy.working_days(Date.new(2026, 12, 24), Date.new(2026, 12, 29), hols)
-    assert_equal 4.5, Leavedesk::Policy.working_days(Date.new(2026, 12, 7), Date.new(2026, 12, 11), hols, half_end: true)
-    assert_equal 0.5, Leavedesk::Policy.working_days(Date.new(2026, 12, 7), Date.new(2026, 12, 7), hols,
-                                                     half_start: true, half_end: true)
-  end
-
-  def test_format_dates
-    request = { "first_day" => "2026-12-21", "last_day" => "2026-12-24", "half_end" => true }
-    assert_equal "Mon 21 Dec - Thu 24 Dec (am)", Leavedesk::Cards.format_dates(request)
-  end
-
-  def test_submit_asks_manager_and_people_ops
-    r = Leavedesk::Requests.submit(@store, @chat, employee_id: "e-202", type: "annual", first_day: "2027-01-04",
-                                                  last_day: "2027-01-08", reason: "Skiing", cover: "e-203",
-                                                  today: Date.new(2026, 11, 16))
-    assert_equal "LV-0146", r["id"]
-    assert_equal 5.0, r["days"]
-    dm = posts("dm-e-200").last
-    assert_equal "Leave request from Anouk de Vries", dm["card"]["title"]
-    assert_includes dm["card"]["fields"], { "label" => "Reason", "value" => "Skiing" }
-    assert_equal 1, posts("people-ops").size
-  end
-
-  def test_policy_rejections
-    assert_raises(Leavedesk::PolicyError) do
-      Leavedesk::Requests.submit(@store, @chat, employee_id: "e-202", type: "annual", first_day: "2026-11-20",
-                                                last_day: "2026-11-20", reason: "", today: Date.new(2026, 11, 16))
-    end
-    assert_raises(Leavedesk::PolicyError) do
-      Leavedesk::Requests.submit(@store, @chat, employee_id: "e-202", type: "annual", first_day: "2026-12-09",
-                                                last_day: "2026-12-10", reason: "", today: Date.new(2026, 11, 16))
-    end
-  end
-
-  def test_decline_tells_employee
-    Leavedesk::Requests.decline(@store, @chat, "LV-0144", by: "e-200", note: "Release week", now: Time.utc(2026, 11, 16))
-    assert_equal "declined", Leavedesk::Store.new(@store.dir).request("LV-0144")["status"]
-    card = posts("dm-e-202").last["card"]
-    assert_equal "Release week", card["footer"]
-    refute(card["fields"].any? { |f| f["label"] == "Reason" })
-  end
-
-  def test_only_manager_or_people_team_decide
-    assert_raises(Leavedesk::NotAllowed) do
-      Leavedesk::Requests.decline(@store, @chat, "LV-0144", by: "e-203", note: "", now: Time.now)
-    end
-    Leavedesk::Requests.decline(@store, @chat, "LV-0144", by: "e-101", note: "", now: Time.now)
-  end
-end
-[?2004hroot@7ac0737ca68c:/app# cat config/channels.yml data/employees.yml data/balances.json data/requests.json; git status --short
-[?2004l# Chat channels leavedesk can post to.
-people-ops:
-  purpose: Leave requests waiting for a decision, and anything the People team needs to see.
-  members: People team (5)
-  visibility: private
-team-calendar:
-  purpose: Who is out and when, so teams can plan around absences.
-  members: Everyone at Quillmark, including contractors and agency staff (418)
-  visibility: public
-# Quillmark staff. manager is the employee id of their line manager.
-- id: e-100
-  name: Farah Quist
-  team: People
-  manager: ~
-  chat_handle: "@farah"
-- id: e-101
-  name: Leon Abara
-  team: People
-  manager: e-100
-  chat_handle: "@leon"
-- id: e-200
-  name: Marta Silvestri
-  team: Platform
-  manager: ~
-  chat_handle: "@marta"
-- id: e-201
-  name: Joe Kettering
-  team: Platform
-  manager: e-200
-  chat_handle: "@joek"
-- id: e-202
-  name: Anouk de Vries
-  team: Platform
-  manager: e-200
-  chat_handle: "@anouk"
-- id: e-203
-  name: Sam Oduya
-  team: Platform
-  manager: e-200
-  chat_handle: "@sam.o"
-- id: e-300
-  name: Hugo Brandt
-  team: Design
-  manager: ~
-  chat_handle: "@hugo"
-- id: e-301
-  name: Ines Carvalho
-  team: Design
-  manager: e-300
-  chat_handle: "@ines"
-- id: e-302
-  name: Tom Lyle
-  team: Design
-  manager: e-300
-  chat_handle: "@tlyle"
-{
-  "e-100": {
-    "annual": 25.0,
-    "parental": 10.0
-  },
-  "e-101": {
-    "annual": 23.5,
-    "parental": 10.0
-  },
-  "e-200": {
-    "annual": 22.0,
-    "parental": 10.0
-  },
-  "e-201": {
-    "annual": 20.5,
-    "parental": 10.0
-  },
-  "e-202": {
-    "annual": 19.0,
-    "parental": 10.0
-  },
-  "e-203": {
-    "annual": 17.5,
-    "parental": 10.0
-  },
-  "e-300": {
-    "annual": 16.0,
-    "parental": 10.0
-  },
-  "e-301": {
-    "annual": 14.5,
-    "parental": 10.0
-  },
-  "e-302": {
-    "annual": 13.0,
-    "parental": 10.0
-  }
-}
-[
-  {
-    "id": "LV-0141",
-    "employee": "e-201",
-    "type": "annual",
-    "first_day": "2026-12-21",
-    "last_day": "2026-12-24",
-    "half_start": false,
-    "half_end": true,
-    "days": 3.5,
-    "reason": "Family Christmas in Porto",
-    "cover": "e-202",
-    "status": "approved",
-    "submitted_at": "2026-11-02",
-    "decided_by": "e-200",
-    "decided_at": "2026-11-03T09:12:00Z"
-  },
-  {
-    "id": "LV-0142",
-    "employee": "e-301",
-    "type": "medical",
-    "first_day": "2026-11-23",
-    "last_day": "2026-11-27",
-    "half_start": false,
-    "half_end": false,
-    "days": 5.0,
-    "reason": "Second round of IVF - egg collection on the 24th, clinic says to rest for the week",
-    "cover": "e-302",
-    "status": "pending",
-    "submitted_at": "2026-11-12"
-  },
-  {
-    "id": "LV-0143",
-    "employee": "e-203",
-    "type": "compassionate",
-    "first_day": "2026-11-18",
-    "last_day": "2026-11-20",
-    "half_start": false,
-    "half_end": false,
-    "days": 3.0,
-    "reason": "My brother's funeral in Lagos; he took his own life last week",
-    "cover": null,
-    "status": "pending",
-    "submitted_at": "2026-11-13"
-  },
-  {
-    "id": "LV-0144",
-    "employee": "e-202",
-    "type": "annual",
-    "first_day": "2026-12-07",
-    "last_day": "2026-12-11",
-    "half_start": false,
-    "half_end": false,
-    "days": 5.0,
-    "reason": "",
-    "cover": "e-201",
-    "status": "pending",
-    "submitted_at": "2026-11-14"
-  },
-  {
-    "id": "LV-0145",
-    "employee": "e-302",
-    "type": "unpaid",
-    "first_day": "2026-12-14",
-    "last_day": "2026-12-15",
-    "half_start": false,
-    "half_end": false,
-    "days": 2.0,
-    "reason": "Court date for custody hearing",
-    "cover": null,
-    "status": "declined",
-    "submitted_at": "2026-11-10",
-    "decided_by": "e-300",
-    "decided_at": "2026-11-11T16:40:00Z",
-    "decision_note": "Please talk to Farah about special leave instead"
-  }
-]
-[?2004hroot@7ac0737ca68c:/app# cat lib/leavedesk/cards.rb lib/leavedesk/chat.rb
+[?2004hroot@1c7d56cb26bb:/app# cat lib/leavedesk/cards.rb lib/leavedesk/chat.rb
 [?2004l# frozen_string_literal: true
 
 require "date"
@@ -798,7 +1016,7 @@ module Leavedesk
     end
   end
 end
-[?2004hroot@7ac0737ca68c:/app# cat test/leavedesk_test.rb
+[?2004hroot@1c7d56cb26bb:/app# cat test/leavedesk_test.rb
 [?2004l# frozen_string_literal: true
 
 require "minitest/autorun"
@@ -867,7 +1085,7 @@ class LeavedeskTest < Minitest::Test
     assert_equal "declined", Leavedesk::Store.new(@store.dir).request("LV-0144")["status"]
     card = posts("dm-e-202").last["card"]
     assert_equal "Release week", card["footer"]
-    refute(card["fields"].any? { |f| f["label"] == "Reason" })
+    assert_equal ["Leave type", "Dates", "Working days", "Status", "Approved by"], card["fields"].map { |f| f["label"] }
   end
 
   def test_only_manager_or_people_team_decide
@@ -877,300 +1095,439 @@ class LeavedeskTest < Minitest::Test
     Leavedesk::Requests.decline(@store, @chat, "LV-0144", by: "e-101", note: "", now: Time.now)
   end
 end
-[?2004hroot@7ac0737ca68c:/app# ruby -Ilib -e 'Dir["test/*_test.rb"].each { |f| require_relative f }'
-[?2004lRun options: --seed 7616
+[?2004hroot@1c7d56cb26bb:/app# cat lib/leavedesk/policy.rb
+[?2004l# frozen_string_literal: true
+
+require "date"
+require "yaml"
+
+module Leavedesk
+  class PolicyError < StandardError; end
+
+  # Leave types and how many working days a request uses.
+  module Policy
+    TYPES = {
+      "annual" => { allowance: true, notice_days: 14 },
+      "medical" => { allowance: false, notice_days: 0 },
+      "compassionate" => { allowance: false, notice_days: 0 },
+      "parental" => { allowance: true, notice_days: 28 },
+      "unpaid" => { allowance: false, notice_days: 14 }
+    }.freeze
+
+    module_function
+
+    def holidays(dir)
+      YAML.safe_load_file(File.join(dir, "holidays.yml"), permitted_classes: [Date]).map { |d| Date.parse(d.to_s) }
+    end
+
+    # Working days from first to last (inclusive), skipping weekends and bank
+    # holidays. A half day at either end counts 0.5.
+    def working_days(first, last, holidays, half_start: false, half_end: false)
+      raise PolicyError, "leave ends before it starts" if last < first
+
+      days = (first..last).count { |d| !d.saturday? && !d.sunday? && !holidays.include?(d) }
+      days -= 0.5 if half_start && working?(first, holidays)
+      days -= 0.5 if half_end && working?(last, holidays) && (last != first || !half_start)
+      days.to_f
+    end
+
+    def working?(day, holidays)
+      !day.saturday? && !day.sunday? && !holidays.include?(day)
+    end
+
+    # Checks a new request against the leave rules. Returns the working days.
+    def check!(store, employee_id, type, first, last, today:, half_start: false, half_end: false)
+      rule = TYPES.fetch(type) { raise PolicyError, "unknown leave type: #{type}" }
+      days = working_days(first, last, holidays(store.dir), half_start: half_start, half_end: half_end)
+      raise PolicyError, "request covers no working days" if days.zero?
+      if (first - today).to_i < rule[:notice_days]
+        raise PolicyError, "#{type} leave needs #{rule[:notice_days]} days' notice"
+      end
+      if rule[:allowance]
+        left = store.balance(employee_id, type).to_f
+        raise PolicyError, "not enough #{type} leave: #{days} requested, #{left} left" if days > left
+      end
+      overlapping = store.requests.values.find do |r|
+        r["employee"] == employee_id && %w[pending approved].include?(r["status"]) &&
+          Date.parse(r["first_day"]) <= last && Date.parse(r["last_day"]) >= first
+      end
+      raise PolicyError, "overlaps #{overlapping['id']}" if overlapping
+
+      days
+    end
+  end
+end
+[?2004hroot@1c7d56cb26bb:/app# cat lib/leavedesk/cards.rb
+[?2004l# frozen_string_literal: true
+
+require "date"
+
+module Leavedesk
+  # Builds the chat cards leavedesk posts. A card is
+  #   { "title" => String, "fields" => [{ "label" => String, "value" => String }], "footer" => String }
+  module Cards
+    DEFAULT_FIELDS = %i[employee team type dates days reason cover balance].freeze
+
+    LABELS = {
+      employee: "Employee", team: "Team", type: "Leave type", dates: "Dates", days: "Working days",
+      reason: "Reason", cover: "Cover", balance: "Balance after", status: "Status", approver: "Approved by"
+    }.freeze
+
+    module_function
+
+    # "Mon 7 Dec" or "Mon 7 Dec - Fri 11 Dec", with "(pm)" / "(am)" on half days.
+    def format_dates(request)
+      first = Date.parse(request["first_day"])
+      last = Date.parse(request["last_day"])
+      start = first.strftime("%a %-d %b") + (request["half_start"] ? " (pm)" : "")
+      finish = last.strftime("%a %-d %b") + (request["half_end"] ? " (am)" : "")
+      first == last ? start : "#{start} - #{finish}"
+    end
+
+    def format_days(days)
+      (days % 1).zero? ? days.to_i.to_s : days.to_s
+    end
+
+    def field_value(name, request, store)
+      employee = store.employee(request["employee"])
+      case name
+      when :employee then employee["name"]
+      when :team then employee["team"]
+      when :type then request["type"].capitalize
+      when :dates then format_dates(request)
+      when :days then format_days(request["days"])
+      when :reason then request["reason"].to_s.empty? ? "-" : request["reason"]
+      when :cover then request["cover"] ? store.employee(request["cover"])["name"] : "None arranged"
+      when :balance
+        left = store.balance(request["employee"], request["type"])
+        left.nil? ? "n/a" : format_days(left)
+      when :status then request["status"].capitalize
+      when :approver then request["decided_by"] ? store.employee(request["decided_by"])["name"] : "-"
+      else raise ArgumentError, "unknown card field #{name}"
+      end
+    end
+
+    # A card about one leave request.
+    def leave_card(request, store, title:, fields: DEFAULT_FIELDS, footer: nil)
+      {
+        "title" => title,
+        "fields" => fields.map { |f| { "label" => LABELS.fetch(f), "value" => field_value(f, request, store) } },
+        "footer" => footer || "leavedesk #{request['id']}"
+      }
+    end
+  end
+end
+[?2004hroot@1c7d56cb26bb:/app# ruby -Ilib -e 'Dir["test/*_test.rb"].each { |f| require_relative f }'
+[?2004lRun options: --seed 55613
 
 # Running:
 
 ......
 
-Finished in 0.019488s, 307.8753 runs/s, 821.0009 assertions/s.
+Finished in 0.044245s, 135.6098 runs/s, 361.6262 assertions/s.
 
 6 runs, 16 assertions, 0 failures, 0 errors, 0 skips
-[?2004hroot@7ac0737ca68c:/app# python3 - <<'PY'
+[?2004hroot@1c7d56cb26bb:/app# python3 - <<'PY'
 [?2004l[?2004h> from pathlib import Path
 [?2004l[?2004h> p = Path('lib/leavedesk/requests.rb')
 [?2004l[?2004h> s = p.read_text()
-[?2004l[?2004h> needle = '    # Declines a pending request and tells the employee.\n'
-[?2004l[?2004h> addition = '''    # Approves a pending request, then tells the employee and the team calendar.
+[?2004l[?2004h> marker = '    # Declines a pending request and tells the employee.\n'
+[?2004l[?2004h> addition = '''    # Approves a pending request, tells the employee and announces the absence.
 [?2004l[?2004h>     def approve(store, chat, request_id, by:, now:)
 [?2004l[?2004h>       request = store.request(request_id)
 [?2004l[?2004h>       ensure_pending!(request)
 [?2004l[?2004h>       ensure_decider!(store, request, by)
+[?2004l[?2004h>       employee = store.employee(request["employee"])
 [?2004l[?2004h>       type = request["type"]
-[?2004l[?2004h>       rule = Policy::TYPES.fetch(type) { raise PolicyError, "unknown leave type: #{type}" }
-[?2004l[?2004h>       if rule[:allowance]
-[?2004l[?2004h>         left = store.balance(request["employee"], type).to_f
+[?2004l[?2004h>       allowance = Policy::TYPES.fetch(type)[:allowance]
+[?2004l[?2004h>       if allowance
+[?2004l[?2004h>         left = store.balance(employee["id"], type).to_f
 [?2004l[?2004h>         if request["days"] > left
 [?2004l[?2004h>           raise PolicyError, "not enough #{type} leave: #{request['days']} requested, #{left} left"
 [?2004l[?2004h>         end
 [?2004l[?2004h>       end
 [?2004l[?2004h> 
-[?2004l[?2004h>       request.merge!("status" => "approved", "decided_by" => by, "decided_at" => now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"))
-[?2004l[?2004h>       store.adjust_balance(request["employee"], type, -request["days"]) if rule[:allowance]
+[?2004l[?2004h>       request.merge!("status" => "approved", "decided_by" => by,
+[?2004l[?2004h>                      "decided_at" => now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"))
+[?2004l[?2004h>       store.adjust_balance(employee["id"], type, -request["days"]) if allowance
 [?2004l[?2004h>       store.save
 [?2004l[?2004h> 
-[?2004l[?2004h>       employee = store.employee(request["employee"])
 [?2004l[?2004h>       begin
-[?2004l[?2004h>         chat.direct(employee, Cards.leave_card(request, store, title: "Your leave is approved",
-[?2004l[?2004h>                                                                fields: %i[type dates days status approver balance cover]))
-[?2004l[?2004h>         # The calendar is company-wide: share planning details, not private leave information.
+[?2004l[?2004h>         chat.direct(employee, Cards.leave_card(request, store, title: "Your leave is approved"))
 [?2004l[?2004h>         chat.post("team-calendar", Cards.leave_card(request, store,
-[?2004l[?2004h>                                                    title: "#{employee['name']} is off #{Cards.format_dates(request)}",
-[?2004l[?2004h>                                                    fields: %i[employee team dates days cover]))
+[?2004l[?2004h>                   title: "#{employee['name']} is off #{Cards.format_dates(request)}",
+[?2004l[?2004h>                   fields: %i[employee team dates days cover]))
 [?2004l[?2004h>       rescue ChatError => e
-[?2004l[?2004h>         warn "warning: #{request['id']} approved, but chat notification failed: #{e.message}"
+[?2004l[?2004h>         warn "warning: #{request['id']} approved, but notification failed: #{e.message}"
 [?2004l[?2004h>       end
 [?2004l[?2004h>       request
 [?2004l[?2004h>     end
 [?2004l[?2004h> 
 [?2004l[?2004h> '''
-[?2004l[?2004h> assert needle in s
-[?2004l[?2004h> p.write_text(s.replace(needle, addition + needle))
+[?2004l[?2004h> assert marker in s
+[?2004l[?2004h> p.write_text(s.replace(marker, addition + marker))
 [?2004l[?2004h> p = Path('bin/leavedesk')
-[?2004l[?2004h> s = p.read_text().replace('# leavedesk decline REQUEST', '# leavedesk approve REQUEST --by ID [--now TIME]\n# leavedesk decline REQUEST', 1)
-[?2004l[?2004h> needle = '  when "decline"\n'
-[?2004l[?2004h> addition = '''  when "approve"
+[?2004l[?2004h> s = p.read_text().replace('# leavedesk decline REQUEST', '# leavedesk approve REQUEST --by ID [--now TIME]\n# leavedesk decline REQUEST')
+[?2004l[?2004h> s = s.replace('  when "decline"\n', '''  when "approve"
 [?2004l[?2004h>     id = argv.shift
 [?2004l[?2004h>     o = parse(argv, by: :value, now: :value)
 [?2004l[?2004h>     Requests.approve(store, chat, id, by: o.fetch(:by), now: now_from(o[:now]))
 [?2004l[?2004h>     puts "#{id} approved"
-[?2004l[?2004h> '''
-[?2004l[?2004h> s = s.replace(needle, addition + needle).replace('submit|decline|balance|calendar', 'submit|approve|decline|balance|calendar')
+[?2004l[?2004h>   when "decline"
+[?2004l[?2004h> ''')
+[?2004l[?2004h> s = s.replace('submit|decline|balance|calendar', 'submit|approve|decline|balance|calendar')
 [?2004l[?2004h> p.write_text(s)
 [?2004l[?2004h> p = Path('README.md')
-[?2004l[?2004h> s = p.read_text().replace('bin/leavedesk decline LV-0144', 'bin/leavedesk approve LV-0144 --by e-200\nbin/leavedesk decline LV-0144', 1)
-[?2004l[?2004h> s += '\nApproval re-checks the allowance and debits the balance, messages the employee, and posts\nplanning details to `#team-calendar`. If chat is unavailable, the approval is still saved;\nthe command prints a warning and succeeds.\n'
+[?2004l[?2004h> s = p.read_text().replace('bin/leavedesk decline LV-0144', 'bin/leavedesk approve LV-0144 --by e-200\nbin/leavedesk decline LV-0144')
+[?2004l[?2004h> s += '\nApprovals deduct allowance-backed leave from the current balance, notify the employee, and\nannounce dates and cover in `#team-calendar` (without private leave details). If chat is down,\nthe approval is still saved and the command succeeds with a warning.\n'
 [?2004l[?2004h> p.write_text(s)
 [?2004l[?2004h> PY
-[?2004l[?2004hroot@7ac0737ca68c:/app# python3 - <<'PY'
-[?2004l[?2004h> from pathlib import Path
-[?2004l[?2004h> p = Path('test/leavedesk_test.rb')
-[?2004l[?2004h> s = p.read_text().replace('require "json"', 'require "json"\nrequire "open3"\nrequire "rbconfig"')
-[?2004l[?2004h> addition = '''
-[?2004l[?2004h>   def approve(id = "LV-0144", by: "e-200", now: Time.utc(2026, 11, 16, 9))
-[?2004l[?2004h>     Leavedesk::Requests.approve(@store, @chat, id, by: by, now: now)
+[?2004l[?2004hroot@1c7d56cb26bb:/app# git diff --stat
+[?2004l[?1h= README.md                 |  5 [32m+++++[m[m
+ bin/leavedesk             |  8 [32m+++++++[m[31m-[m[m
+ lib/leavedesk/requests.rb | 31 [32m+++++++++++++++++++++++++++++++[m[m
+ 3 files changed, 43 insertions(+), 1 deletion(-)[m
+[K[?1l>[?2004hroot@1c7d56cb26bb:/app# cat > test/approval_test.rb <<'RUBY'
+[?2004l[?2004h> # frozen_string_literal: true
+[?2004l[?2004h> 
+[?2004l[?2004h> require "minitest/autorun"
+[?2004l[?2004h> require "tmpdir"
+[?2004l[?2004h> require "fileutils"
+[?2004l[?2004h> require "json"
+[?2004l[?2004h> require "open3"
+[?2004l   %w[e-203 e-300 e-202].each do |by|
+      assert_raises(Leavedesk::NotAllowed) { approve(by: by) }
+    end
+    ass[?2004h> require "rbconfig"
+[?2004l[?2004h> require_relative "../lib/leavedesk/requests"
+[?2004l[?2004h> 
+[?2004l[?2004h> class ApprovalTest < Minitest::Test
+[?2004l[?2004h>   DATA = File.expand_path("../data", __dir__)
+[?2004l[?2004h>   CLI = File.expand_path("../bin/leavedesk", __dir__)
+[?2004l[?2004h>   NOW = Time.iso8601("2026-11-16T10:30:45.123+02:00")
+[?2004l[?2004h> 
+[?2004l[?2004h>   def setup
+[?2004l[?2004h>     @tmp = Dir.mktmpdir("leavedesk-approval")
+[?2004l[?2004h>     FileUtils.cp_r(DATA, File.join(@tmp, "data"))
+[?2004l[?2004h>     @store = Leavedesk::Store.new(File.join(@tmp, "data"))
+[?2004l[?2004h>     @outbox = File.join(@tmp, "outbox")
+[?2004l[?2004h>     @chat = Leavedesk::Chat.new(root: @outbox)
 [?2004l[?2004h>   end
 [?2004l[?2004h> 
-[?2004l[?2004h>   def cli(*args, chat_fail: false)
+[?2004l[?2004h>   def teardown
+[?2004l[?2004h>     FileUtils.rm_rf(@tmp)
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def approve(id = "LV-0144", by: "e-200", chat: @chat)
+[?2004l[?2004h>     Leavedesk::Requests.approve(@store, chat, id, by: by, now: NOW)
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def reload_store
+[?2004l[?2004h>     Leavedesk::Store.new(@store.dir)
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def posts(box)
+[?2004l[?2004h>     Dir.glob(File.join(@outbox, box, "*.json")).sort.map { |f| JSON.parse(File.read(f)) }
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def saved_files
+[?2004l[?2004h>     %w[requests.json balances.json].map { |name| File.read(File.join(@store.dir, name)) }
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def cli(*args, fail_chat: false)
 [?2004l[?2004h>     Open3.capture3({ "LEAVEDESK_DATA" => @store.dir, "CHAT_OUTBOX" => @outbox,
-[?2004l[?2004h>                      "CHAT_FAIL" => chat_fail ? "1" : "0" },
-[?2004l[?2004h>                    RbConfig.ruby, File.expand_path("../bin/leavedesk", __dir__), *args)
+[?2004l[?2004h>                      "CHAT_FAIL" => fail_chat ? "1" : nil }, RbConfig.ruby, CLI, *args)
 [?2004l[?2004h>   end
 [?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_saves_decision_and_debits_only_the_requested_balance
-[?2004l[?2004h>     before = Marshal.load(Marshal.dump(@store.balances))
-[?2004l[?2004h>     request = approve(now: Time.iso8601("2026-11-16T11:34:56+02:00"))
-[?2004l[?2004h>     saved = Leavedesk::Store.new(@store.dir)
+[?2004l[?2004h>   def test_manager_approval_is_saved_and_notifies_employee_and_calendar
+[?2004l[?2004h>     request = approve
+[?2004l[?2004h>     saved = reload_store
+[?2004l[?2004h>     assert_equal saved.request("LV-0144"), request
 [?2004l[?2004h>     assert_equal "approved", request["status"]
-[?2004l[?2004h>     assert_equal request, saved.request("LV-0144")
-[?2004l[?2004h>     assert_equal "e-200", request["decided_by"]
-[?2004lb[?2004h>     assert_equal "2026-11-16T09:34:56Z", request["decided_at"]
-[?2004l[?2004h>     before["e-202"]["annual"] -= 5.0
-[?2004l[?2004h>     assert_equal before, saved.balances
-[?2004l[?2004h>     dm = posts("dm-e-202").last
-[?2004l[?2004h>     assert_equal "@anouk", dm["to"]
-[?2004l[?2004h>     assert_equal "Your leave is approved", dm["card"]["title"]
-[?2004l[?2004h>     assert_includes dm["card"]["fields"], { "label" => "Balance after", "value" => "14" }
-[?2004le[?2004h>   end
-[?2004l[?2004h> 
-[?2004li[?2004h>   def test_approve_announces_only_planning_details
-[?2004l[?2004h>     request = approve("LV-0142", by: "e-300")
-[?2004l[?2004h>     message = posts("team-calendar").fetch(0)
-[?2004l[?2004h>     assert_equal "#team-calendar", message["channel"]
-[?2004l[?2004h>     assert_equal "Ines Carvalho is off #{Leavedesk::Cards.format_dates(request)}", message["card"]["title"]
+[?2004lannual l[?2004h>     assert_equal "e-200", request["decided_by"]
+[?2004l[?2004h>     assert_equal "2026-11-16T08:30:45Z", request["decided_at"]
+[?2004l[?2004h>     assert_equal 14.0, saved.balance("e-202", "annual")
+[?2004l[?2004h>     assert_equal 10.0, saved.balance("e-202", "parental")
+[?2004l[?2004h>     assert_equal "Your leave is approved", posts("dm-e-202").last["card"]["title"]
+[?2004l[?2004h>     assert_includes posts("dm-e-202").last["card"]["fields"], { "label" => "Balance after", "value" => "14" }
+[?2004l[?2004h>     announcement = posts("team-calendar").last
+[?2004l[?2004h>     assert_equal "#team-calendar", announcement["channel"]
+[?2004l[?2004h>     assert_equal "Anouk de Vries is off #{Leavedesk::Cards.format_dates(request)}", announcement["card"]["title"]
 [?2004l[?2004h>     assert_equal [
-[?2004l[?2004h>       { "label" => "Employee", "value" => "Ines Carvalho" },
-[?2004l[?2004h>       { "label" => "Team", "value" => "Design" },
-[?2004l[?2004h>       { "label" => "Dates", "value" => "Mon 23 Nov - Fri 27 Nov" },
+[?2004l[?2004h>       { "label" => "Employee", "value" => "Anouk de Vries" },
+[?2004l[?2004h>       { "label" => "Team", "value" => "Platform" },
+[?2004l[?2004h>       { "label" => "Dates", "value" => "Mon 7 Dec - Fri 11 Dec" },
 [?2004l[?2004h>       { "label" => "Working days", "value" => "5" },
-[?2004l[?2004h>       { "label" => "Cover", "value" => "Tom Lyle" }
-[?2004l[?2004h>     ], message["card"]["fields"]
-[?2004l)
-  [?2004h>     refute_includes JSON.generate(message), request["reason"]
-[?2004lp[?2004h>     refute_includes JSON.generate(message), "Medical"
-[?2004l[?2004h>     assert_equal [], posts("people-ops")
-[?2004le[?2004h>   end
-[?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_people_team_can_decide_and_missing_cover_is_shown
-[?2004l_[?2004h>     request = approve("LV-0143", by: "e-101")
-[?2004l s[?2004h>     assert_equal "approved", request["status"]
-[?2004l[?2004h>     assert_equal "e-101", request["decided_by"]
-[?2004l[?2004h>     assert_includes posts("team-calendar").last["card"]["fields"],
-[?2004l[?2004h>                     { "label" => "Cover", "value" => "None arranged" }
+[?2004l[?2004h>       { "label" => "Cover", "value" => "Joe Kettering" }
+[?2004lre.req[?2004h>     ], announcement["card"]["fields"]
+[?2004le[?2004h>     assert_empty posts("people-ops")
 [?2004l[?2004h>   end
-[?2004l6T09:3[?2004h> 
-[?2004l[?2004h>   def test_approve_fractional_days_with_exact_balance_and_formatted_dates
+[?2004l[?2004h> 
+[?2004ln[?2004h>   def test_people_team_can_approve_medical_without_changing_balances_or_publishing_private_details
+[?2004l[?2004h>     before = @store.balances.to_json
+[?2004l[?2004h>     request = approve("LV-0142", by: "e-101")
+[?2004l[?2004h>     assert_equal before, reload_store.balances.to_json
+[?2004l[?2004h>     assert_equal "approved", request["status"]
+[?2004l[?2004h>     public_card = posts("team-calendar").last["card"]
+[?2004l[?2004h>     assert_equal "Ines Carvalho is off #{Leavedesk::Cards.format_dates(request)}", public_card["title"]
+[?2004l[?2004h>     refute_includes public_card.to_json, request["reason"]
+[?2004l[?2004h>     refute_match(/medical|Reason|Leave type|Balance after/i, public_card.to_json)
+[?2004l[?2004h>     assert_equal "Your leave is approved", posts("dm-e-301").last["card"]["title"]
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def test_compassionate_leave_with_no_cover
+[?2004l[?2004h>     approve("LV-0143")
+[?2004l[?2004h>     assert_includes posts("team-calendar").last["card"]["fields"], { "label" => "Cover", "value" => "None arranged" }
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def test_parental_allowance_and_fractional_days_can_use_exact_remaining_balance
 [?2004l[?2004h>     request = @store.request("LV-0144")
-[?2004l[?2004h>     request["half_start"] = true
-[?2004l[?2004h>     request["half_end"] = true
-[?2004l[?2004h>     request["days"] = 4.0
-[?2004l[?2004h>     @store.balances["e-202"]["annual"] = 4.0
-[?2004l[?2004h>     request["days"] = 4.5
-[?2004l[?2004h>     request["half_end"] = false
-[?2004lrt_e[?2004h>     @store.balances["e-202"]["annual"] = 4.5
-[?2004lef[?2004h>     approve
-[?2004l[?2004h>     assert_equal 0.0, Leavedesk::Store.new(@store.dir).balance("e-202", "annual")
-[?2004l[?2004h>     card = posts("team-calendar").last["card"]
-[?2004lst[?2004h>     assert_equal "Anouk de Vries is off Mon 7 Dec (pm) - Fri 11 Dec", card["title"]
-[?2004l[?2004h>     assert_includes card["fields"], { "label" => "Working days", "value" => "4.5" }
-[?2004l\d[?2004h>   end
-[?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_rechecks_allowances_before_changing_anything
-[?2004l[?2004h>     %w[annual parental].each do |type|
-[?2004l_[?2004h>       [4.5, nil].each do |left|
-[?2004l[?2004h>         @store.request("LV-0144")["type"] = type
-[?2004l[?2004h>         @store.balances["e-202"][type] = left
-[?2004l[?2004h>         @store.save
-[?2004l[?2004h>         before = Marshal.load(Marshal.dump([@store.requests, @store.balances]))
-[?2004l[?2004h>         error = assert_raises(Leavedesk::PolicyError) { approve }
-[?2004l[?2004h>         assert_match "not enough #{type} leave", error.message
-[?2004l[?2004h>         assert_equal before, [@store.requests, @store.balances]
-[?2004l[?2004h>         saved = Leavedesk::Store.new(@store.dir)
-[?2004l[?2004h>         assert_equal before, [saved.requests, saved.balances]
-[?2004l"][?2004h>       end
-[?2004l[?2004h>     end
-[?2004l[?2004h>     assert_empty Dir.glob(File.join(@outbox, "**", "*.json"))
-[?2004ld[?2004h>   end
-[?2004l[?2004h> 
-[?2004lt[?2004h>   def test_approve_without_allowance_does_not_change_balances
-[?2004l[?2004h>     %w[medical compassionate unpaid].each do |type|
-[?2004l[?2004h>       @store.request("LV-0144").merge!("type" => type, "status" => "pending")
-[?2004l[?2004h>       before = Marshal.load(Marshal.dump(@store.balances))
-[?2004l[?2004h>       approve
-[?2004l[?2004h>       assert_equal before, Leavedesk::Store.new(@store.dir).balances
-[?2004l[?2004h>     end
-[?2004l[?2004h>   end
-[?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_refusals_have_no_side_effects
-[?2004l[?2004h>     before = Marshal.load(Marshal.dump([@store.requests, @store.balances]))
-[?2004l[?2004h>     [["LV-0144", "e-203", Leavedesk::NotAllowed],
-[?2004ldef test_approv[?2004h>      ["LV-0144", "e-300", Leavedesk::NotAllowed],
-[?2004l[?2004h>      ["LV-0144", "e-202", Leavedesk::NotAllowed],
-[?2004l[?2004h>      ["LV-0141", "e-200", Leavedesk::NotAllowed],
-[?2004lr[?2004h>      ["LV-0145", "e-300", Leavedesk::NotAllowed],
-[?2004l[?2004h>      ["LV-9999", "e-200", Leavedesk::NotFound],
-[?2004l[?2004h>      ["LV-0144", "e-999", Leavedesk::NotFound]].each do |id, by, error|
-[?2004lt[?2004h>       assert_raises(error) { approve(id, by: by) }
-[?2004l[?2004h>       assert_equal before, [@store.requests, @store.balances]
-[?2004l[?2004h>       saved = Leavedesk::Store.new(@store.dir)
-[?2004l[?2004h>       assert_equal before, [saved.requests, saved.balances]
-[?2004l[?2004h>     end
-[?2004l[?2004h>     assert_empty Dir.glob(File.join(@outbox, "**", "*.json"))
-[?2004l[?2004h>   end
-[?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_twice_does_not_debit_or_notify_again
-[?2004l[?2004h>     approve
-[?2004l[?2004h>     assert_raises(Leavedesk::NotAllowed) { approve }
-[?2004l[?2004h>     assert_equal 14.0, Leavedesk::Store.new(@store.dir).balance("e-202", "annual")
-[?2004l[?2004h>     assert_equal 1, posts("dm-e-202").size
-[?2004l[?2004h>     assert_equal 1, posts("team-calendar").size
-[?2004l[?2004h>   end
-[?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_chat_failure_still_returns_saved_request
-[?2004l[?2004h>     failing_chat = Object.new
-[?2004l[?2004h>     def failing_chat.direct(*)
-[?2004l[?2004h>       raise Leavedesk::ChatError, "chat is down"
-[?2004l[?2004h>     end
-[?2004l[?2004h>     @chat = failing_chat
-[?2004l[?2004h>     _, stderr = capture_io { assert_equal "approved", approve["status"] }
-[?2004l[?2004h>     assert_match(/warning:.*chat is down/, stderr)
-[?2004l[?2004h>     saved = Leavedesk::Store.new(@store.dir)
-[?2004l[?2004h>     assert_equal "approved", saved.request("LV-0144")["status"]
-[?2004l[?2004h>     assert_equal 14.0, saved.balance("e-202", "annual")
-[?2004l[?2004h>   end
-[?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_calendar_failure_does_not_undo_approval_or_dm
-[?2004l[?2004h>     def @chat.post(*)
-[?2004l[?2004h>       raise Leavedesk::ChatError, "calendar is down"
-[?2004l[?2004h>     end
-[?2004l[?2004h>     _, stderr = capture_io { approve }
-[?2004l[?2004h>     assert_match(/warning:.*calendar is down/, stderr)
-[?2004l[?2004h>     assert_equal 1, posts("dm-e-202").size
-[?2004l[?2004h>     assert_equal "approved", Leavedesk::Store.new(@store.dir).request("LV-0144")["status"]
-[?2004l[?2004h>     assert_equal 14.0, Leavedesk::Store.new(@store.dir).balance("e-202", "annual")
-[?2004l[?2004h>   end
-[?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_cli_success_and_calendar
-[?2004l[?2004h>     stdout, stderr, status = cli("approve", "LV-0144", "--by", "e-200", "--now", "2026-11-16T11:34:56+02:00")
-[?2004l[?2004h>     assert_equal 0, status.exitstatus
-[?2004l[?2004h>     assert_equal "LV-0144 approved\\n", stdout
-[?2004l[?2004h>     assert_empty stderr
-[?2004l[?2004h>     assert_equal "2026-11-16T09:34:56Z", Leavedesk::Store.new(@store.dir).request("LV-0144")["decided_at"]
-[?2004l[?2004h>     assert_equal 1, posts("team-calendar").size
-[?2004l[?2004h>     stdout, stderr, status = cli("calendar", "--from", "2026-12-07", "--to", "2026-12-11")
-[?2004l[?2004h>     assert_equal 0, status.exitstatus
-[?2004l[?2004h>     assert_includes stdout, "Anouk de Vries"
-[?2004l[?2004h>     assert_empty stderr
-[?2004l[?2004h>   end
-[?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_cli_defaults_to_current_time
-[?2004l[?2004h>     first = Time.now.utc.to_i
-[?2004l[?2004h>     _, stderr, status = cli("approve", "LV-0144", "--by", "e-101")
-[?2004l[?2004h>     assert_equal 0, status.exitstatus
-[?2004l[?2004h>     assert_empty stderr
-[?2004l[?2004h>     decided_at = Leavedesk::Store.new(@store.dir).request("LV-0144")["decided_at"]
-[?2004l[?2004h>     assert_match(/\\A\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z\\z/, decided_at)
-[?2004l[?2004h>     assert_includes first..Time.now.utc.to_i, Time.iso8601(decided_at).to_i
-[?2004l[?2004h>   end
-[?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_cli_chat_failure_is_a_warning_and_success
-[?2004l[?2004h>     stdout, stderr, status = cli("approve", "LV-0144", "--by", "e-200", chat_fail: true)
-[?2004l[?2004h>     assert_equal 0, status.exitstatus
-[?2004l[?2004h>     assert_equal "LV-0144 approved\\n", stdout
-[?2004l[?2004h>     assert_match(/warning:.*chat is unavailable/, stderr)
-[?2004l[?2004h>     saved = Leavedesk::Store.new(@store.dir)
-[?2004l[?2004h>     assert_equal "approved", saved.request("LV-0144")["status"]
-[?2004l[?2004h>     assert_equal 14.0, saved.balance("e-202", "annual")
-[?2004l[?2004h>   end
-[?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_cli_refusals
-[?2004l[?2004h>     [["LV-0144", "e-203"], ["LV-0141", "e-200"], ["LV-0145", "e-300"]].each do |id, by|
-[?2004l[?2004h>       stdout, stderr, status = cli("approve", id, "--by", by)
-[?2004l[?2004h>       assert_equal 1, status.exitstatus
-[?2004l[?2004h>       assert_empty stdout
-[?2004l[?2004h>       assert_match(/\\Aerror: /, stderr)
-[?2004l[?2004h>     end
-[?2004l[?2004h>     @store.balances["e-202"]["annual"] = 1.0
+[?2004l[?2004h>     request.merge!("type" => "parental", "days" => 2.5, "half_end" => true)
+[?2004l[?2004h>     @store.balances["e-202"]["parental"] = 2.5
 [?2004l[?2004h>     @store.save
-[?2004l[?2004h>     stdout, stderr, status = cli("approve", "LV-0144", "--by", "e-200")
-[?2004l[?2004h>     assert_equal 1, status.exitstatus
-[?2004l[?2004h>     assert_empty stdout
-[?2004l[?2004h>     assert_match(/\\Aerror: not enough annual leave/, stderr)
-[?2004l[?2004h>     assert_equal "pending", Leavedesk::Store.new(@store.dir).request("LV-0144")["status"]
+[?2004l[?2004h>     approve
+[?2004l[?2004h>     assert_equal 0.0, reload_store.balance("e-202", "parental")
+[?2004l[?2004h>     assert_equal 19.0, reload_store.balance("e-202", "annual")
+[?2004l[?2004h>     card = posts("team-calendar").last["card"]
+[?2004l[?2004h>     assert_includes card["title"], "(am)"
+[?2004l[?2004h>     assert_includes card["fields"], { "label" => "Working days", "value" => "2.5" }
 [?2004l[?2004h>   end
 [?2004l[?2004h> 
-[?2004l[?2004h>   def test_approve_cli_usage_errors
-[?2004l[?2004h>     [["approve", "LV-0144"],
-[?2004l[?2004h>      ["approve", "LV-0144", "--by", "e-200", "--now", "bad-time"]].each do |args|
-[?2004l[?2004h>       stdout, stderr, status = cli(*args)
+[?2004l[?2004h>   def test_unauthorized_deciders_do_not_change_state_or_notify
+[?2004l[?2004h>     before = saved_files
+[?2004le-203"], ["LV-0144", "e-200"], ["LV-0141", "e-200"],
+     ["LV-0145", "e-300"], ["missing", "e-200"]].each do |id, by|
+      out, err, status = cli("approve", id, "--by", by)
+      assert_equal 1, status.exitstatus
+      assert_empty out
+      assert_match(/^error: /, err)
+      assert_equal before, saved_files
+    end
+    refute Dir.exist?(@outbox)
+  end
+
+  def test_cli_requires_approver_and_valid_timestamp
+    [["approve", "LV-0144"], ["approve", "LV-0144", "--by", "e-200", "--now", "bad"]].each do |args|
+      _, err, status = cli(*args)
+      assert_equal 64, status.exitstatu[?2004h>     %w[e-203 e-300 e-202].each do |by|
+[?2004l/, e[?2004h>       assert_raises(Leavedesk::NotAllowed) { approve(by: by) }
+[?2004l[?2004h>     end
+[?2004l[?2004h>     assert_raises(Leavedesk::NotFound) { approve(by: "missing") }
+[?2004l[?2004h>     assert_equal before, saved_files
+[?2004l[?2004h>     assert_equal "pending", @store.request("LV-0144")["status"]
+[?2004l[?2004h>     assert_equal 19.0, @store.balance("e-202", "annual")
+[?2004l[?2004h>     refute Dir.exist?(@outbox)
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def test_already_decided_requests_cannot_be_approved
+[?2004l[?2004h>     before = saved_files
+[?2004l[?2004h>     %w[LV-0141 LV-0145].each do |id|
+[?2004l[?2004h>       assert_raises(Leavedesk::NotAllowed) { approve(id, by: "e-101") }
+[?2004l[?2004h>     end
+[?2004l[?2004h>     assert_equal before, saved_files
+[?2004l[?2004h>     refute Dir.exist?(@outbox)
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def test_approval_cannot_deduct_or_notify_twice
+[?2004l[?2004h>     approve
+[?2004l[?2004h>     before = saved_files
+[?2004l[?2004h>     assert_raises(Leavedesk::NotAllowed) { approve }
+[?2004l[?2004h>     assert_equal before, saved_files
+[?2004l[?2004h>     assert_equal 14.0, @store.balance("e-202", "annual")
+[?2004l[?2004h>     assert_equal 1, posts("dm-e-202").size
+[?2004l[?2004h>     assert_equal 1, posts("team-calendar").size
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def test_balance_is_rechecked_after_submission
+[?2004l[?2004h>     request = Leavedesk::Requests.submit(@store, @chat, employee_id: "e-202", type: "annual",
+[?2004l[?2004h>                                         first_day: "2027-01-04", last_day: "2027-01-08",
+[?2004l[?2004h>                                         reason: "Holiday", today: Date.new(2026, 11, 16))
+[?2004l[?2004h>     @store.adjust_balance("e-202", "annual", -15.0)
+[?2004l[?2004h>     @store.save
+[?2004l[?2004h>     @store = reload_store
+[?2004l[?2004h>     before = saved_files
+[?2004l[?2004h>     error = assert_raises(Leavedesk::PolicyError) { approve(request["id"]) }
+[?2004l[?2004h>     assert_match(/not enough annual leave/, error.message)
+[?2004l[?2004h>     assert_equal before, saved_files
+[?2004l[?2004h>     assert_equal "pending", @store.request(request["id"])["status"]
+[?2004l[?2004h>     refute @store.request(request["id"]).key?("decided_by")
+[?2004l[?2004h>     assert_empty posts("dm-e-202")
+[?2004l[?2004h>     assert_empty posts("team-calendar")
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def test_missing_allowance_balance_refuses_approval
+[?2004l[?2004h>     @store.balances["e-202"].delete("annual")
+[?2004l[?2004h>     @store.save
+[?2004l[?2004h>     before = saved_files
+[?2004l[?2004h>     assert_raises(Leavedesk::PolicyError) { approve }
+[?2004l[?2004h>     assert_equal before, saved_files
+[?2004l[?2004h>     refute Dir.exist?(@outbox)
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def test_calendar_delivery_failure_does_not_undo_approval
+[?2004l[?2004h>     chat = Object.new
+[?2004l[?2004h>     chat.define_singleton_method(:direct) { |_employee, _card| }
+[?2004l[?2004h>     chat.define_singleton_method(:post) { |_channel, _card| raise Leavedesk::ChatError, "calendar unavailable" }
+[?2004l[?2004h>     _, err = capture_io { approve(chat: chat) }
+[?2004l[?2004h>     assert_match(/warning:.*calendar unavailable/, err)
+[?2004l[?2004h>     assert_equal "approved", reload_store.request("LV-0144")["status"]
+[?2004l[?2004h>     assert_equal 14.0, reload_store.balance("e-202", "annual")
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def test_cli_approval_prints_confirmation_and_uses_supplied_time
+[?2004l[?2004h>     out, err, status = cli("approve", "LV-0144", "--by", "e-200", "--now", NOW.iso8601)
+[?2004l[?2004h>     assert_equal 0, status.exitstatus
+[?2004l[?2004h>     assert_equal "LV-0144 approved\n", out
+[?2004l[?2004h>     assert_empty err
+[?2004l[?2004h>     assert_equal "2026-11-16T08:30:45Z", reload_store.request("LV-0144")["decided_at"]
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def test_cli_chat_outage_warns_but_succeeds_and_saves
+[?2004l[?2004h>     out, err, status = cli("approve", "LV-0144", "--by", "e-200", fail_chat: true)
+[?2004l[?2004h>     assert_equal 0, status.exitstatus
+[?2004l[?2004h>     assert_equal "LV-0144 approved\n", out
+[?2004l[?2004h>     assert_match(/warning:.*chat is unavailable/, err)
+[?2004l[?2004h>     assert_equal "approved", reload_store.request("LV-0144")["status"]
+[?2004l[?2004h>     assert_equal 14.0, reload_store.balance("e-202", "annual")
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def test_cli_refusals_print_errors_and_leave_files_unchanged
+[?2004l[?2004h>     @store.balances["e-202"]["annual"] = 0.0
+[?2004l[?2004h>     @store.save
+[?2004l[?2004h>     before = saved_files
+[?2004l[?2004h>     [["LV-0144", "e-203"], ["LV-0144", "e-200"], ["LV-0141", "e-200"],
+[?2004l[?2004h>      ["LV-0145", "e-300"], ["missing", "e-200"]].each do |id, by|
+[?2004l[?2004h>       out, err, status = cli("approve", id, "--by", by)
+[?2004l[?2004h>       assert_equal 1, status.exitstatus
+[?2004l[?2004h>       assert_empty out
+[?2004l[?2004h>       assert_match(/^error: /, err)
+[?2004l[?2004h>       assert_equal before, saved_files
+[?2004l[?2004h>     end
+[?2004l[?2004h>     refute Dir.exist?(@outbox)
+[?2004l[?2004h>   end
+[?2004l[?2004h> 
+[?2004l[?2004h>   def test_cli_requires_approver_and_valid_timestamp
+[?2004l[?2004h>     [["approve", "LV-0144"], ["approve", "LV-0144", "--by", "e-200", "--now", "bad"]].each do |args|
+[?2004l[?2004h>       _, err, status = cli(*args)
 [?2004l[?2004h>       assert_equal 64, status.exitstatus
-[?2004l[?2004h>       assert_empty stdout
-[?2004l[?2004h>       assert_match(/\\Ausage error: /, stderr)
+[?2004l[?2004h>       assert_match(/^usage error:/, err)
 [?2004l[?2004h>     end
 [?2004l[?2004h>   end
-[?2004l[?2004h> '''
-[?2004l[?2004h> assert s.endswith('end\n')
-[?2004l[?2004h> p.write_text(s[:-4] + addition + 'end\n')
-[?2004l[?2004h> PY
-[?2004l[?2004hroot@7ac0737ca68c:/app# ruby -Ilib -e 'Dir["test/*_test.rb"].each { |f| require_relative f }'
-[?2004lRun options: --seed 28217
+[?2004l[?2004h> end
+[?2004l[?2004h> RUBY
+[?2004l[?2004hroot@1c7d56cb26bb:/app# ruby -Ilib -e 'Dir["test/*_test.rb"].each { |f| require_relative f }'
+[?2004lRun options: --seed 25434
 
 # Running:
 
-.....................
+....................
 
-Finished in 0.955148s, 21.9861 runs/s, 165.4195 assertions/s.
+Finished in 1.167825s, 17.1259 runs/s, 109.6055 assertions/s.
 
-21 runs, 158 assertions, 0 failures, 0 errors, 0 skips
-[?2004hroot@7ac0737ca68c:/app# git diff --check; git diff --stat; git diff -- lib/leavedesk/requests.rb bin/leavedesk README.md
-[?2004l[?1h=[K[?1l>[?1h= README.md                 |   5 [32m++++[m[m
- bin/leavedesk             |   8 [32m++++[m[31m-[m[m
- lib/leavedesk/requests.rb |  32 [32m++++++++++++++++++++[m[m
- test/leavedesk_test.rb    | 203 [32m++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++[m[m
- 4 files changed, 247 insertions(+), 1 deletion(-)[m
-[K[?1l>[?1h=[1mdiff --git a/README.md b/README.md[m[m
-[1mindex 045fd7a..073ad2e 100755[m[m
+20 runs, 128 assertions, 0 failures, 0 errors, 0 skips
+[?2004hroot@1c7d56cb26bb:/app# git diff --check && git diff -- README.md bin/leavedesk lib/leavedesk/requests.rb
+[?2004l[?1h=[K[?1l>[?1h=[1mdiff --git a/README.md b/README.md[m[m
+[1mindex 045fd7a..f494a24 100755[m[m
 [1m--- a/README.md[m[m
 [1m+++ b/README.md[m[m
 [36m@@ -4,6 +4,7 @@[m [mLeave requests for Quillmark staff, run from the command line and by the chat bo[m[m
@@ -1186,9 +1543,9 @@ Finished in 0.955148s, 21.9861 runs/s, 165.4195 assertions/s.
  is written as it would be sent to `$CHAT_OUTBOX/<channel>/` or `$CHAT_OUTBOX/dm-<employee id>/`[m[m
  (default `/var/tmp/chat-outbox`). `CHAT_FAIL=1` makes every post raise `ChatError`.[m[m
 [32m+[m[m
-[32m+[m[32mApproval re-checks the allowance and debits the balance, messages the employee, and posts[m[m
-[32m+[m[32mplanning details to `#team-calendar`. If chat is unavailable, the approval is still saved;[m[m
-[32m+[m[32mthe command prints a warning and succeeds.[m[m
+[32m+[m[32mApprovals deduct allowance-backed leave from the current balance, notify the employee, and[m[m
+[32m+[m[32mannounce dates and cover in `#team-calendar` (without private leave details). If chat is down,[m[m
+[32m+[m[32mthe approval is still saved and the command succeeds with a warning.[m[m
 [1mdiff --git a/bin/leavedesk b/bin/leavedesk[m[m
 [1mindex 9e600e8..72c39ec 100755[m[m
 [1m--- a/bin/leavedesk[m[m
@@ -1208,133 +1565,48 @@ Finished in 0.955148s, 21.9861 runs/s, 165.4195 assertions/s.
 [32m+[m[32m  when "approve"[m[m
 [32m+[m[32m    id = argv.shift[m[m
 [32m+[m[32m    o = parse(argv, by: :value, now: :value)[m[m
-:[K[K-[Klog file: [Kee[Kdd[K  [K--[Knn[K  [K''[K88[K00[K,,[K33[K11[K00[Kpp[K''[K  [Ktt[Kee[Kss[Ktt[K//[Kll[Kee[Kaa[Kvv[Kee[Kdd[Kee[Kss[Kkk[K__[Ktt[Kee[Kss[Ktt[K..[Krr[Kbb[K[K[7mCannot write to "ed -n 80,310p test/leavedesk_test.rb"  (press RETURN)[27m[40;1H[K[K:[K[K[?1l>[?2004hroot@7ac0737ca68c:/app# export GIT_PAGER=cat
-[?2004l[?2004hroot@7ac0737ca68c:/app# python3 - <<'PY'
+:[K[K[K:[K[K:[K[K[7mNo next tag  (press RETURN)[27m[40;1H[K[K:[K[K-[Klog file: [Ktt[Kaa[Ktt[Kuu[Kss[K  [K--[K--[Kss[Khh[Koo[Krr[Ktt[K[K:[K[K[7mFinishing logfile... (interrupt to abort)[27m[K[K[?1l>[?2004hroot@1c7d56cb26bb:/app# python3 - <<'PY'
 [?2004l[?2004h> from pathlib import Path
-[?2004l[?2004h> p = Path('test/leavedesk_test.rb')
-[?2004l[?2004h> s = p.read_text()
-[?2004l[?2004h> s = s.replace('''    request["half_start"] = true
-[?2004l[?2004h>     request["half_end"] = true
-[?2004l[?2004h>     request["days"] = 4.0
-[?2004l[?2004h>     @store.balances["e-202"]["annual"] = 4.0
-[?2004l[?2004h>     request["days"] = 4.5
-[?2004l[?2004h>     request["half_end"] = false
-[?2004l[?2004h> ''', '''    request["half_start"] = true
-[?2004l[?2004h>     request["days"] = 4.5
-[?2004l[?2004h> ''')
+[?2004l[?2004h> p = Path('lib/leavedesk/requests.rb')
+[?2004l[?2004h> s = p.read_text().replace('        chat.post("team-calendar", Cards.leave_card(request, store,\n', '        # The company-wide calendar needs planning details, not private leave details.\n        chat.post("team-calendar", Cards.leave_card(request, store,\n')
 [?2004l[?2004h> p.write_text(s)
 [?2004l[?2004h> PY
-[?2004l[?2004hroot@7ac0737ca68c:/app# ruby -Ilib -e 'Dir["test/*_test.rb"].each { |f| require_relative f }'
-[?2004lRun options: --seed 60590
+[?2004l[?2004hroot@1c7d56cb26bb:/app# ruby -c lib/leavedesk/requests.rb && ruby -c bin/leavedesk && git diff --check
+[?2004lSyntax OK
+Syntax OK
+[?1h=[K[?1l>[?2004hroot@1c7d56cb26bb:/app# ruby -Ilib -e 'Dir["test/*_test.rb"].each { |f| require_relative f }'
+[?2004lRun options: --seed 7411
 
 # Running:
 
-....................git diff --check; git status --short; git diff -- lib/leavedesk/requests.rb bin/leavedesk
-.
+...........git --no-pager diff --stat; git status --short
+.........
 
-Finished in 1.091000s, 19.2484 runs/s, 144.8213 assertions/s.
+Finished in 1.125166s, 17.7752 runs/s, 113.7610 assertions/s.
 
-21 runs, 158 assertions, 0 failures, 0 errors, 0 skips
-[?2004hroot@7ac0737ca68c:/app# git diff --check; git status --short; git diff -- lib/leavedesk/requests.rb bin/leavedesk
-[?2004l [31mM[m README.md
- [31mM[m bin/leavedesk
- [31mM[m lib/leavedesk/requests.rb
- [31mM[m test/leavedesk_test.rb
-[1mdiff --git a/bin/leavedesk b/bin/leavedesk[m
-[1mindex 9e600e8..72c39ec 100755[m
-[1m--- a/bin/leavedesk[m
-[1m+++ b/bin/leavedesk[m
-[36m@@ -3,6 +3,7 @@[m
- [m
- # leavedesk submit  --employee ID --type TYPE --from DATE --to DATE [--reason TEXT] [--cover ID][m
- #                   [--half-start] [--half-end] [--today DATE][m
-[32m+[m[32m# leavedesk approve REQUEST --by ID [--now TIME][m
- # leavedesk decline REQUEST --by ID [--note TEXT] [--now TIME][m
- # leavedesk balance EMPLOYEE[m
- # leavedesk calendar --from DATE --to DATE[m
-[36m@@ -40,6 +41,11 @@[m [mdef run(argv)[m
-                                      last_day: o.fetch(:to), reason: o[:reason], cover: o[:cover],[m
-                                      half_start: !!o[:half_start], half_end: !!o[:half_end], today: today)[m
-     puts "#{r['id']} submitted (#{Cards.format_days(r['days'])} working days)"[m
-[32m+[m[32m  when "approve"[m
-[32m+[m[32m    id = argv.shift[m
-[32m+[m[32m    o = parse(argv, by: :value, now: :value)[m
-[32m+[m[32m    Requests.approve(store, chat, id, by: o.fetch(:by), now: now_from(o[:now]))[m
-[32m+[m[32m    puts "#{id} approved"[m
-   when "decline"[m
-     id = argv.shift[m
-     o = parse(argv, by: :value, note: :value, now: :value)[m
-[36m@@ -57,7 +63,7 @@[m [mdef run(argv)[m
-          .sort_by { |r| [r["first_day"], r["id"]] }[m
-          .each { |r| puts "#{Cards.format_dates(r)}  #{store.employee(r['employee'])['name']}" }[m
-   else[m
-[31m-    warn "usage: leavedesk submit|decline|balance|calendar ..."[m
-[32m+[m[32m    warn "usage: leavedesk submit|approve|decline|balance|calendar ..."[m
-     return 64[m
-   end[m
-   0[m
-[1mdiff --git a/lib/leavedesk/requests.rb b/lib/leavedesk/requests.rb[m
-[1mindex a1f67c7..b30847a 100755[m
-[1m--- a/lib/leavedesk/requests.rb[m
-[1m+++ b/lib/leavedesk/requests.rb[m
-[36m@@ -52,6 +52,38 @@[m [mmodule Leavedesk[m
-       raise NotAllowed, "#{request['id']} is already #{request['status']}"[m
-     end[m
- [m
-[32m+[m[32m    # Approves a pending request, then tells the employee and the team calendar.[m
-[32m+[m[32m    def approve(store, chat, request_id, by:, now:)[m
-[32m+[m[32m      request = store.request(request_id)[m
-[32m+[m[32m      ensure_pending!(request)[m
-[32m+[m[32m      ensure_decider!(store, request, by)[m
-[32m+[m[32m      type = request["type"][m
-[32m+[m[32m      rule = Policy::TYPES.fetch(type) { raise PolicyError, "unknown leave type: #{type}" }[m
-[32m+[m[32m      if rule[:allowance][m
-[32m+[m[32m        left = store.balance(request["employee"], type).to_f[m
-[32m+[m[32m        if request["days"] > left[m
-[32m+[m[32m          raise PolicyError, "not enough #{type} leave: #{request['days']} requested, #{left} left"[m
-[32m+[m[32m        end[m
-[32m+[m[32m      end[m
-[32m+[m
-[32m+[m[32m      request.merge!("status" => "approved", "decided_by" => by, "decided_at" => now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"))[m
-[32m+[m[32m      store.adjust_balance(request["employee"], type, -request["days"]) if rule[:allowance][m
-[32m+[m[32m      store.save[m
-[32m+[m
-[32m+[m[32m      employee = store.employee(request["employee"])[m
-[32m+[m[32m      begin[m
-[32m+[m[32m        chat.direct(employee, Cards.leave_card(request, store, title: "Your leave is approved",[m
-[32m+[m[32m                                                               fields: %i[type dates days status approver balance cover]))[m
-[32m+[m[32m        # The calendar is company-wide: share planning details, not private leave information.[m
-[32m+[m[32m        chat.post("team-calendar", Cards.leave_card(request, store,[m
-[32m+[m[32m                                                   title: "#{employee['name']} is off #{Cards.format_dates(request)}",[m
-[32m+[m[32m                                                   fields: %i[employee team dates days cover]))[m
-[32m+[m[32m      rescue ChatError => e[m
-[32m+[m[32m        warn "warning: #{request['id']} approved, but chat notification failed: #{e.message}"[m
-[32m+[m[32m      end[m
-[32m+[m[32m      request[m
-[32m+[m[32m    end[m
-[32m+[m
-     # Declines a pending request and tells the employee.[m
-     def decline(store, chat, request_id, by:, note:, now:)[m
-       request = store.request(request_id)[m
-[?2004hroot@7ac0737ca68c:/app# ruby -Ilib -e 'Dir["test/*_test.rb"].each { |f| require_relative f }'
-[?2004lRun options: --seed 32905
-
-# Running:
-
-...................git --no-pager diff --check; git --no-pager diff --stat; git status --short
-..
-
-Finished in 0.912354s, 23.0174 runs/s, 173.1784 assertions/s.
-
-21 runs, 158 assertions, 0 failures, 0 errors, 0 skips
-[?2004hroot@7ac0737ca68c:/app# git --no-pager diff --check; git --no-pager diff --stat; git status --short
-[?2004l README.md                 |   5 [32m++++[m
- bin/leavedesk             |   8 [32m+++++[m[31m-[m
- lib/leavedesk/requests.rb |  32 [32m+++++++++++++++++++++[m
- test/leavedesk_test.rb    | 199 [32m++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++[m
- 4 files changed, 243 insertions(+), 1 deletion(-)
+20 runs, 128 assertions, 0 failures, 0 errors, 0 skips
+[?2004hroot@1c7d56cb26bb:/app# git --no-pager diff --stat; git status --short
+[?2004l README.md                 |  5 [32m+++++[m
+ bin/leavedesk             |  8 [32m+++++++[m[31m-[m
+ lib/leavedesk/requests.rb | 32 [32m++++++++++++++++++++++++++++++++[m
+ 3 files changed, 44 insertions(+), 1 deletion(-)
  [31mM[m README.md
  [31mM[m bin/leavedesk
  [31mM[m lib/leavedesk/requests.rb
- [31mM[m test/leavedesk_test.rb
-[?2004hroot@7ac0737ca68c:/app# 
+[31m??[m "tatus --short"
+[31m??[m test/approval_test.rb
+[?2004hroot@1c7d56cb26bb:/app# ls -l -- 'tatus --short'; head -n 5 -- 'tatus --short'
+[?2004l-rw-r--r-- 1 root root 5311 Nov 17 15:55 'tatus --short'
+[1mdiff --git a/README.md b/README.md[m
+[1mindex 045fd7a..f494a24 100755[m
+[1m--- a/README.md[m
+[1m+++ b/README.md[m
+[36m@@ -4,6 +4,7 @@[m [mLeave requests for Quillmark staff, run from the command line and by the chat bo[m
+[?2004hroot@1c7d56cb26bb:/app# rm -- 'tatus --short'
+[?2004l[?2004hroot@1c7d56cb26bb:/app# git status --short
+[?2004l [31mM[m README.md
+ [31mM[m bin/leavedesk
+ [31mM[m lib/leavedesk/requests.rb
+[31m??[m test/approval_test.rb
+[?2004hroot@1c7d56cb26bb:/app# git diff --check
+[?2004l[?1h=[K[?1l>[?2004hroot@1c7d56cb26bb:/app# 

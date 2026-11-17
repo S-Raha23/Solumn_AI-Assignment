@@ -66,7 +66,7 @@ class LeavedeskTest < Minitest::Test
     assert_equal "declined", Leavedesk::Store.new(@store.dir).request("LV-0144")["status"]
     card = posts("dm-e-202").last["card"]
     assert_equal "Release week", card["footer"]
-    refute(card["fields"].any? { |f| f["label"] == "Reason" })
+    assert_equal ["Leave type", "Dates", "Working days", "Status", "Approved by"], card["fields"].map { |f| f["label"] }
   end
 
   def test_only_manager_or_people_team_decide

@@ -10,8 +10,8 @@
         "download_dir": null,
         "source": "environments"
     },
-    "trial_name": "clinic-reminder-sms__FEtkN49",
-    "trials_dir": "<repo>\\jobs\\clinic-reminder-sms\\rollout_v3",
+    "trial_name": "clinic-reminder-sms__kgPKnk2",
+    "trials_dir": "<repo>\\jobs\\clinic-reminder-sms\\rollout_v4",
     "install_only": false,
     "timeout_multiplier": 1.0,
     "agent_timeout_multiplier": null,
@@ -66,6 +66,6 @@
     "artifacts": [],
     "extra_instruction_paths": [],
     "extra_instructions": [],
-    "job_id": "d78dc626-7944-432b-9a26-bdc75fb0eb44",
+    "job_id": "cae66171-5c0d-460b-aa11-39fe5a453ac3",
     "source_trial": null
 }
